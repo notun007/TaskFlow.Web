@@ -1,11 +1,44 @@
+@if (!auth.accessToken()) {
+  <main class="auth-shell">
+    <section class="auth-page" [attr.aria-labelledby]="registering() ? 'register-title' : 'login-title'">
+      <div class="auth-page-brand"><span class="brand-mark">TF</span><span>TaskFlow</span></div>
+      <div class="auth-card">
+        <p class="eyebrow">SECURE ACCESS</p>
+        @if (registering()) {
+          <h2 id="register-title">Create your account</h2>
+          <p class="auth-copy">Set up the first account, then create your initial project.</p>
+          <form class="auth-form" (submit)="$event.preventDefault(); login()">
+            <label>Display name<input autocomplete="name" [value]="loginDisplayName()" (input)="loginDisplayName.set($any($event.target).value)" /></label>
+            <label>Email<input type="email" autocomplete="username" [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" /></label>
+            <label>Password<input type="password" autocomplete="new-password" [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" /></label>
+            <label>Confirm password<input type="password" autocomplete="new-password" [value]="loginConfirmPassword()" (input)="loginConfirmPassword.set($any($event.target).value)" /></label>
+            @if (loginError()) {<p class="form-message error">{{ loginError() }}</p>}
+            <button type="button" class="text-button" (click)="openLogin()">Already have an account? Sign in</button>
+            <div class="auth-actions"><button type="button" class="secondary" (click)="openLogin()">Cancel</button><button type="submit" class="primary" [disabled]="loggingIn()">{{ loggingIn() ? 'Please wait...' : 'Create account' }}</button></div>
+          </form>
+        } @else {
+          <h2 id="login-title">Sign in to continue</h2>
+          <p class="auth-copy">Creating and updating tasks requires your TaskFlow account.</p>
+          <form class="auth-form" (submit)="$event.preventDefault(); login()">
+            <label>Email<input type="email" autocomplete="username" [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" /></label>
+            <label>Password<input type="password" autocomplete="current-password" [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" /></label>
+            @if (loginError()) {<p class="form-message error">{{ loginError() }}</p>}
+            <div class="auth-links auth-links-end"><button type="button" class="text-button" (click)="openResetPassword()">Forgot password?</button></div>
+            <div class="auth-actions"><button type="submit" class="primary" [disabled]="loggingIn()">{{ loggingIn() ? 'Please wait...' : 'Sign in' }}</button></div>
+          </form>
+        }
+      </div>
+    </section>
+  </main>
+} @else {
 <div class="shell">
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark">TF</span><span>TaskFlow</span></div>
     <div class="workspace-label">WORKSPACE</div>
     <nav>
-      @for (item of ['Dashboard', 'My Work', 'Projects', 'Software', 'Teams', 'Vendors', 'Reports', 'Audit Log']; track item) {
+      @for (item of ['Dashboard', 'My Work', 'Projects', 'Software', 'Teams', 'Vendors', 'Reports', 'Audit Log', 'Create Account']; track item) {
         <button class="nav-item" [class.selected]="activeNav() === item" (click)="setNav(item)">
-          <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : '◌' }}</span>{{ item }}
+          <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : item === 'Create Account' ? '+' : '◌' }}</span>{{ item }}
         </button>
       }
     </nav>
@@ -15,19 +48,195 @@
   <main class="main">
     <header class="topbar">
       <div class="crumb">Operations <span>/</span> Work management</div>
-      <div class="top-actions"><label class="search"><span>⌕</span><input placeholder="Search tasks, projects..." [value]="search()" (input)="search.set($any($event.target).value)" /></label><button class="icon-button" aria-label="Notifications">♢<i></i></button><div class="avatar">SA</div></div>
+      <div class="top-actions"><label class="search"><span>⌕</span><input placeholder="Search tasks..." [value]="search()" (input)="search.set($any($event.target).value)" (keydown.enter)="applyTaskFilters()" /></label><button class="icon-button" aria-label="Notifications">♢<i></i></button>@if (auth.accessToken()) {<span class="signed-in-user">{{ auth.currentUser()?.email }}</span><button class="auth-button" (click)="openChangePassword()">Change password</button><button class="auth-button" (click)="logout()">Sign out</button>}<div class="avatar" [attr.title]="currentUserName()">{{ currentUserInitials() }}</div></div>
     </header>
 
     <section class="content">
-      <div class="page-heading"><div><p class="eyebrow">TUESDAY, AUGUST 4, 2026</p><h1>Good morning, Sarah</h1><p class="subheading">Here is the work that needs your attention today.</p></div><button class="primary" (click)="showCreate.set(true)">＋ Create task</button></div>
-      <div class="stat-row"><div class="stat"><span>My open tasks</span><strong>24</strong><em class="green">↑ 8% <small>vs last week</small></em></div><div class="stat"><span>Due this week</span><strong>11</strong><em class="amber">3 critical <small>need attention</small></em></div><div class="stat"><span>Pending vendor</span><strong>06</strong><em class="blue">2 overdue <small>escalate today</small></em></div><div class="stat"><span>Awaiting approval</span><strong>04</strong><em class="purple">Review queue <small>is ready</small></em></div></div>
-
-      <div class="section-head"><div><h2>My work</h2><p>Tasks assigned to you or requiring your attention</p></div><div class="view-actions"><button class="view active">☷</button><button class="view">▦</button><button class="filter">Filter <span>⌄</span></button></div></div>
-      <div class="work-layout"><section class="task-panel"><div class="table-head"><span>Task</span><span>Project / software</span><span>Owner</span><span>Status</span><span>Priority</span><span>Due</span></div>@for (task of filteredTasks(); track task.id) {<div class="task-row"><div class="task-name"><span class="task-id">{{ task.id }}</span><strong>{{ task.title }}</strong><small>{{ task.severity }} severity</small></div><div class="project"><strong>{{ task.project }}</strong><small>{{ task.software }}</small></div><div class="owner"><span class="mini-avatar">{{ initials(task.owner) }}</span>{{ task.owner }}</div><div><span class="status" [class]="task.status.toLowerCase().replace(' ', '-')">{{ task.status }}</span></div><div><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span></div><div class="due" [class.overdue]="task.due === 'Today'">{{ task.due }}</div></div>} @empty {<div class="empty">No tasks match your search.</div>}<div class="table-footer">Showing {{ filteredTasks().length }} of 24 tasks <button>View all tasks →</button></div></section>
-        <aside class="activity"><div class="activity-head"><div><h2>Activity</h2><p>Recent changes across your work</p></div><button>•••</button></div><div class="activity-item"><span class="activity-dot blue-dot"></span><div><strong>Task status changed</strong><p><b>TF-2408</b> moved to In Progress</p><small>12 minutes ago · by you</small></div></div><div class="activity-item"><span class="activity-dot mint-dot"></span><div><strong>Comment added</strong><p>“UAT evidence attached for review”</p><small>48 minutes ago · TF-2389</small></div></div><div class="activity-item"><span class="activity-dot amber-dot"></span><div><strong>Vendor SLA alert</strong><p>Payment Gateway response overdue</p><small>2 hours ago · System alert</small></div></div><div class="activity-item"><span class="activity-dot purple-dot"></span><div><strong>Approval requested</strong><p>Regulatory report field mappings</p><small>Yesterday · TF-2404</small></div></div><button class="activity-link">View audit log →</button></aside>
+      @if (activeNav() === 'Create Account') {
+        <section class="account-screen" aria-labelledby="create-account-title">
+          <div class="account-heading">
+            <p class="eyebrow">SECURE ACCESS</p>
+            <h1 id="create-account-title">Create your account</h1>
+            <p>Set up the first account, then create your initial project.</p>
+          </div>
+          <form class="account-form" (submit)="$event.preventDefault(); login()">
+            <label>Display name<input autocomplete="name" [value]="loginDisplayName()" (input)="loginDisplayName.set($any($event.target).value)" /></label>
+            <label>Email<input type="email" autocomplete="username" [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" /></label>
+            <label>Password<input type="password" autocomplete="new-password" [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" /></label>
+            <label>Confirm password<input type="password" autocomplete="new-password" [value]="loginConfirmPassword()" (input)="loginConfirmPassword.set($any($event.target).value)" /></label>
+            @if (loginError()) {<p class="form-message error">{{ loginError() }}</p>}
+            <div class="account-form-footer">
+              <button type="button" class="text-button" (click)="openLogin()">Already have an account? Sign in</button>
+              <div class="account-actions"><button type="button" class="secondary" (click)="setNav('Dashboard')">Cancel</button><button type="submit" class="primary" [disabled]="loggingIn()">{{ loggingIn() ? 'Please wait...' : 'Create account' }}</button></div>
+            </div>
+          </form>
+        </section>
+      } @else {
+      @if (activeNav() === 'Projects') {
+        <section class="projects-screen" aria-labelledby="projects-title">
+          <div class="projects-heading"><div><h1 id="projects-title">Projects</h1><p>Plan delivery, ownership, dates, and linked software.</p></div><button type="button" class="primary" (click)="openNewProject()">＋ New project</button></div>
+          @if (projectListError()) {<p class="form-message error">{{ projectListError() }}</p>}
+          <div class="projects-layout" [class.has-detail]="selectedProject()">
+            <section class="projects-panel">
+              <div class="project-toolbar"><div class="project-status-tabs"><button type="button" [class.active]="!projectStatusFilter()" (click)="projectStatusFilter.set('')">All</button><button type="button" [class.active]="projectStatusFilter() === 'Active'" (click)="projectStatusFilter.set('Active')">Active</button><button type="button" [class.active]="projectStatusFilter() === 'On hold'" (click)="projectStatusFilter.set('On hold')">On hold</button><button type="button" [class.active]="projectStatusFilter() === 'Completed'" (click)="projectStatusFilter.set('Completed')">Completed</button></div><label class="project-search"><span>⌕</span><input placeholder="Search projects..." [value]="projectSearch()" (input)="projectSearch.set($any($event.target).value)" /></label></div>
+              <div class="project-table-head"><span>Project</span><span>Status</span><span>Project manager</span><span>Target date</span><span>Tasks</span></div>
+              @if (loadingProjects()) {<div class="empty">Loading projects...</div>} @else {@for (project of filteredProjects(); track project.id) {<button type="button" class="project-row" [class.selected]="selectedProject()?.id === project.id" (click)="openProject(project.id)"><span><strong>{{ project.name }}</strong><small>{{ project.projectKey || 'No project key' }}</small></span><span><i class="project-status-dot"></i>{{ project.status }}</span><span>{{ project.projectManager || 'Unassigned' }}</span><span>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'No target date' }}</span><span>{{ project.taskCount }}</span></button>} @empty {<div class="empty">No projects match your search.</div>}}
+            </section>
+            @if (selectedProject(); as project) {
+              <aside class="project-detail-panel"><div class="project-detail-head"><div><h2>{{ project.name }}</h2><span class="project-status"><i></i>{{ project.status }}</span></div><button type="button" aria-label="Close project details" (click)="closeProject()">×</button></div><dl><div class="project-objectives"><dt>Objectives</dt><dd>{{ project.objectives || 'No objectives have been provided.' }}</dd></div><div><dt>Start date</dt><dd>{{ project.startDate ? (project.startDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Target date</dt><dd>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Project manager</dt><dd>{{ project.projectManager || 'Unassigned' }}</dd></div><div><dt>Sponsor</dt><dd>{{ project.sponsor || 'Unassigned' }}</dd></div><div><dt>Linked software</dt><dd>{{ project.softwareApplicationName || 'Not linked' }}</dd></div><div><dt>Task count</dt><dd>{{ project.taskCount }}</dd></div></dl><div class="project-detail-actions"><button type="button" class="primary" (click)="openProjectEditor()">Edit project</button><button type="button" class="danger-button" (click)="showArchiveProject.set(true)">Archive</button></div></aside>
+            }
+          </div>
+        </section>
+      } @else if (activeNav() === 'Software') {
+        <section class="operations-screen"><div class="operations-heading"><div><h1>Software</h1><p>Manage applications, ownership, lifecycle, and delivery impact.</p></div></div><div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search software..." [value]="operationalSearch()" (input)="operationalSearch.set($any($event.target).value)" /></label><span>{{ filteredSoftware().length }} applications</span></div>@if (operationsError()) {<p class="form-message error">{{ operationsError() }}</p>}<div class="operations-layout" [class.has-detail]="selectedSoftware()"><section class="operations-table"><div class="software-head"><span>Application</span><span>Owner</span><span>Criticality</span><span>Lifecycle</span><span>Projects</span><span>Open tasks</span></div>@if (loadingOperations()) {<div class="empty">Loading software...</div>} @else {@for (item of filteredSoftware(); track item.id) {<button type="button" class="software-row" [class.selected]="selectedSoftware()?.id === item.id" (click)="selectedSoftware.set(item)"><span><strong>{{ item.name }}</strong><small>{{ item.technology || 'Technology not set' }}{{ item.currentVersion ? ' · ' + item.currentVersion : '' }}</small></span><span>{{ item.businessOwner || 'Unassigned' }}</span><span><i class="criticality-dot" [class.high]="item.criticality === 'High'" [class.low]="item.criticality === 'Low'"></i>{{ item.criticality || 'Not set' }}</span><span><b class="lifecycle">{{ item.isProduction ? 'In production' : 'Non-production' }}</b></span><span>{{ item.linkedProjects }}</span><span>{{ item.openTasks }}</span></button>} @empty {<div class="empty">No software applications found.</div>}}</section>@if (selectedSoftware(); as item) {<aside class="operation-detail"><button type="button" class="detail-close" aria-label="Close details" (click)="selectedSoftware.set(null)">×</button><h2>{{ item.name }}</h2><p>{{ item.technology || 'No technology information has been recorded.' }}</p><dl><div><dt>Business owner</dt><dd>{{ item.businessOwner || 'Unassigned' }}</dd></div><div><dt>Technical owner</dt><dd>{{ item.technicalOwner || 'Unassigned' }}</dd></div><div><dt>Vendor</dt><dd>{{ item.vendorName || (item.isThirdParty ? 'Third party' : 'Internal') }}</dd></div><div><dt>Criticality</dt><dd>{{ item.criticality || 'Not set' }}</dd></div><div><dt>Version</dt><dd>{{ item.currentVersion || 'Not set' }}</dd></div><div><dt>Linked projects</dt><dd>{{ item.linkedProjects }}</dd></div><div><dt>Open tasks</dt><dd>{{ item.openTasks }}</dd></div></dl></aside>}</div></section>
+      } @else if (activeNav() === 'Teams') {
+        <section class="operations-screen"><div class="operations-heading"><div><h1>Teams</h1><p>Review delivery teams, departments, and assigned workload.</p></div></div><div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search teams..." [value]="operationalSearch()" (input)="operationalSearch.set($any($event.target).value)" /></label><span>{{ filteredTeams().length }} teams</span></div>@if (operationsError()) {<p class="form-message error">{{ operationsError() }}</p>}<section class="operations-table compact"><div class="team-head"><span>Team</span><span>Department</span><span>Assigned tasks</span></div>@if (loadingOperations()) {<div class="empty">Loading teams...</div>} @else {@for (item of filteredTeams(); track item.id) {<button type="button" class="team-row" [class.selected]="selectedTeam()?.id === item.id" (click)="selectedTeam.set(item)"><span><strong>{{ item.name }}</strong><small>Delivery team</small></span><span>{{ item.department }}</span><span>{{ item.assignedTasks }}</span></button>} @empty {<div class="empty">No teams found.</div>}}</section></section>
+      } @else if (activeNav() === 'Vendors') {
+        <section class="operations-screen"><div class="operations-heading"><div><h1>Vendors</h1><p>Monitor external partners, support contacts, contracts, and SLAs.</p></div></div><div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search vendors..." [value]="operationalSearch()" (input)="operationalSearch.set($any($event.target).value)" /></label><span>{{ filteredVendors().length }} vendors</span></div>@if (operationsError()) {<p class="form-message error">{{ operationsError() }}</p>}<div class="operations-layout" [class.has-detail]="selectedVendor()"><section class="operations-table"><div class="vendor-head"><span>Vendor</span><span>Support contact</span><span>Contract</span><span>Applications</span></div>@if (loadingOperations()) {<div class="empty">Loading vendors...</div>} @else {@for (item of filteredVendors(); track item.id) {<button type="button" class="vendor-row" [class.selected]="selectedVendor()?.id === item.id" (click)="selectedVendor.set(item)"><span><strong>{{ item.name }}</strong><small>{{ item.supportPhone || 'No phone recorded' }}</small></span><span>{{ item.supportEmail || 'Not set' }}</span><span>{{ item.contractReference || 'Not set' }}</span><span>{{ item.applications }}</span></button>} @empty {<div class="empty">No vendors found.</div>}}</section>@if (selectedVendor(); as item) {<aside class="operation-detail"><button type="button" class="detail-close" aria-label="Close details" (click)="selectedVendor.set(null)">×</button><h2>{{ item.name }}</h2><p>{{ item.slaDetails || 'No SLA details have been recorded.' }}</p><dl><div><dt>Support email</dt><dd>{{ item.supportEmail || 'Not set' }}</dd></div><div><dt>Support phone</dt><dd>{{ item.supportPhone || 'Not set' }}</dd></div><div><dt>Contract reference</dt><dd>{{ item.contractReference || 'Not set' }}</dd></div><div><dt>Linked applications</dt><dd>{{ item.applications }}</dd></div></dl></aside>}</div></section>
+      } @else if (activeNav() === 'Reports') {
+        <section class="operations-screen"><div class="operations-heading"><div><h1>Reports</h1><p>A concise operational view of delivery health and workload.</p></div><button type="button" class="secondary" (click)="setNav('Dashboard')">Open dashboard</button></div><div class="report-summary"><div><span>Open tasks</span><strong>{{ dashboardSummary().open }}</strong></div><div><span>Due this week</span><strong>{{ dashboardSummary().dueThisWeek }}</strong></div><div><span>Overdue</span><strong>{{ dashboardSummary().overdue }}</strong></div><div><span>Projects</span><strong>{{ projectRecords().length }}</strong></div></div><section class="report-panel"><div class="activity-head"><div><h2>Task distribution</h2><p>Current workload grouped by workflow stage</p></div></div><div class="report-bars">@for (item of dashboardWorkload(); track item.label) {<div><span>{{ item.label }}</span><div class="report-track"><i [class]="item.tone" [style.width.%]="item.percent"></i></div><strong>{{ item.count }} · {{ item.percent }}%</strong></div>}</div></section></section>
+      } @else if (activeNav() === 'Audit Log') {
+        <section class="operations-screen"><div class="operations-heading"><div><h1>Audit Log</h1><p>Trace authenticated changes across tasks, projects, and assignments.</p></div></div><div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search audit events..." [value]="operationalSearch()" (input)="operationalSearch.set($any($event.target).value)" /></label><span>Latest {{ filteredAudit().length }} events</span></div>@if (operationsError()) {<p class="form-message error">{{ operationsError() }}</p>}<section class="operations-table"><div class="audit-head"><span>Time</span><span>Entity</span><span>Action</span><span>Actor</span></div>@if (loadingOperations()) {<div class="empty">Loading audit events...</div>} @else {@for (item of filteredAudit(); track item.id) {<div class="audit-row"><span>{{ item.createdAt | date:'medium' }}</span><span><strong>{{ item.entityName }}</strong><small>{{ item.entityId }}</small></span><span><b class="audit-action">{{ formatEnum(item.action) }}</b></span><span>{{ item.actorReference }}</span></div>} @empty {<div class="empty">No audit events found.</div>}}</section></section>
+      } @else if (selectedTask(); as task) {
+        <section class="task-details-screen" aria-labelledby="task-details-title">
+          <div class="detail-breadcrumb"><button type="button" (click)="closeTask()">My Work</button><span>/</span>{{ task.taskNumber }}</div>
+          <div class="detail-page-heading"><h1 id="task-details-title">Task details</h1><button type="button" class="text-button back-link" (click)="closeTask()">← Back to tasks</button></div>
+          <section class="task-summary">
+            <div><h2>{{ task.title }}</h2><div class="summary-meta"><span class="status" [class]="statusClass(task.status)">{{ formatEnum(task.status) }}</span><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span><span>{{ task.taskNumber }}</span></div></div>
+            <div class="task-summary-actions"><button type="button" class="secondary" (click)="openTaskEditor()">Edit task</button><label class="status-control"><span class="sr-only">Task status</span><select [value]="task.status" [disabled]="savingTaskStatus()" (change)="changeTaskStatus($any($event.target).value)">@for (status of taskStatuses; track status) {<option [value]="status">{{ formatEnum(status) }}</option>}</select></label></div>
+          </section>
+          @if (taskDetailsError()) {<p class="form-message error detail-message">{{ taskDetailsError() }}</p>}
+          <div class="task-detail-grid">
+            <div class="task-detail-main">
+              <section class="detail-panel description-panel"><h3>Description</h3><p>{{ task.description || 'No description has been provided for this task.' }}</p></section>
+              <section class="detail-panel comments-panel">
+                <h3>Activity &amp; comments</h3>
+                <div class="comment-list">
+                  @for (comment of task.comments; track comment.id) {
+                    <article class="comment-item"><span class="mini-avatar">{{ initials(comment.authorReference).slice(0, 2) }}</span><div><div class="comment-head"><strong>{{ comment.authorReference }}</strong><time>{{ comment.createdAt | date:'medium' }}</time></div><p>{{ comment.body }}</p></div></article>
+                  } @empty {<p class="detail-empty">No comments yet.</p>}
+                </div>
+                <label class="comment-composer">Add a comment<textarea rows="4" placeholder="Write your comment here..." [value]="newComment()" (input)="newComment.set($any($event.target).value)"></textarea></label>
+                @if (commentError()) {<p class="form-message error">{{ commentError() }}</p>}
+                <div class="comment-actions"><button type="button" class="primary" [disabled]="postingComment()" (click)="addComment()">{{ postingComment() ? 'Posting...' : 'Post comment' }}</button></div>
+              </section>
+            </div>
+            <aside class="detail-panel task-information"><h3>Task information</h3><dl><div><dt>Project</dt><dd>{{ task.projectName }}</dd></div><div><dt>Type</dt><dd>{{ formatEnum(task.type) }}</dd></div><div><dt>Priority</dt><dd>{{ task.priority }}</dd></div><div><dt>Due date</dt><dd>{{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}</dd></div><div><dt>Created on</dt><dd>{{ task.createdAt | date:'medium' }}</dd></div><div><dt>Last updated</dt><dd>{{ task.updatedAt ? (task.updatedAt | date:'medium') : 'Not updated' }}</dd></div></dl>
+              <section class="assignment-section"><h3>Assignments</h3><div class="assignment-list">@for (assignment of task.assignments; track assignment.id) {<div class="assignment-item"><span class="mini-avatar">{{ initials(assignment.displayName || assignment.partyReference).slice(0, 2) }}</span><div><strong>{{ assignment.displayName || assignment.partyReference }}</strong><small>{{ formatEnum(assignment.responsibility) }}</small></div><button type="button" aria-label="Remove assignment" (click)="removeAssignment(assignment.id)">×</button></div>} @empty {<p class="detail-empty">No assignments yet.</p>}</div>
+                <div class="assignment-form"><label>Responsibility<select [value]="assignmentResponsibility()" (change)="assignmentResponsibility.set($any($event.target).value)"><option value="Owner">Owner</option><option value="Assignee">Assignee</option><option value="SupportingTeam">Supporting team</option><option value="Vendor">Vendor</option><option value="Approver">Approver</option></select></label><label>Display name<input [value]="assignmentDisplayName()" (input)="assignmentDisplayName.set($any($event.target).value)" placeholder="Name" /></label><label>Reference<input [value]="assignmentPartyReference()" (input)="assignmentPartyReference.set($any($event.target).value)" placeholder="Email, user ID, team, or vendor" /></label>@if (assignmentError()) {<p class="form-message error">{{ assignmentError() }}</p>}<button type="button" class="secondary assignment-add" [disabled]="savingAssignment()" (click)="addAssignment()">{{ savingAssignment() ? 'Adding...' : 'Add assignment' }}</button></div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      } @else {
+      <div class="page-heading"><div><p class="eyebrow">{{ today | date:'EEEE, MMMM d, y' | uppercase }}</p><h1>Good morning, {{ currentUserName() }}</h1><p class="subheading">Here is the work that needs your attention today.</p></div><button class="primary" (click)="openCreate()">＋ Create task</button></div>
+      @if (dashboardError() && activeNav() === 'Dashboard') {<p class="form-message error">{{ dashboardError() }}</p>}
+      <div class="stat-row">
+        <div class="stat"><span>My open tasks</span><strong>{{ dashboardSummary().open }}</strong><em class="green">Active <small>across your workspace</small></em></div>
+        <div class="stat"><span>Due this week</span><strong>{{ dashboardSummary().dueThisWeek }}</strong><em class="amber">Next 7 days <small>need attention</small></em></div>
+        <div class="stat"><span>Overdue</span><strong>{{ dashboardSummary().overdue }}</strong><em class="red">Past due <small>review today</small></em></div>
+        <div class="stat"><span>Awaiting approval</span><strong>{{ dashboardSummary().awaitingApproval }}</strong><em class="purple">Review queue <small>is ready</small></em></div>
       </div>
+
+      <div class="section-head"><div><h2>My work</h2><p>Tasks assigned to you or requiring your attention</p></div></div>
+      <div class="task-filters"><label>Status<select [value]="taskStatusFilter()" (change)="taskStatusFilter.set($any($event.target).value)"><option value="">All statuses</option>@for (status of taskStatuses; track status) {<option [value]="status">{{ formatEnum(status) }}</option>}</select></label><label>Priority<select [value]="taskPriorityFilter()" (change)="taskPriorityFilter.set($any($event.target).value)"><option value="">All priorities</option><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></label><label>Project<select [value]="taskProjectFilter()" (change)="taskProjectFilter.set($any($event.target).value)"><option value="">All projects</option>@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label><label>Sort<select [value]="taskSort()" (change)="taskSort.set($any($event.target).value)"><option value="dueDate:asc">Due date ↑</option><option value="dueDate:desc">Due date ↓</option><option value="title:asc">Title A–Z</option><option value="title:desc">Title Z–A</option><option value="priority:desc">Priority high–low</option><option value="status:asc">Status</option></select></label><button type="button" class="primary" (click)="applyTaskFilters()">Apply</button><button type="button" class="secondary" (click)="clearTaskFilters()">Clear</button></div>
+      <div class="work-layout"><section class="task-panel"><div class="table-head"><span>Task</span><span>Project / software</span><span>Owner</span><span>Status</span><span>Priority</span><span>Due</span></div>@if (activeNav() === 'Dashboard' ? loadingDashboard() : loadingTasks()) {<div class="empty">Loading tasks...</div>} @else if (activeNav() !== 'Dashboard' && taskLoadError()) {<div class="empty">{{ taskLoadError() }}</div>} @else {@for (task of displayedTasks(); track task.id) {<div class="task-row" role="button" tabindex="0" (click)="openTask(task.apiId)" (keydown.enter)="openTask(task.apiId)"><div class="task-name"><span class="task-id">{{ task.id }}</span><strong>{{ task.title }}</strong><small>{{ task.severity }} severity</small></div><div class="project"><strong>{{ task.project }}</strong><small>{{ task.software }}</small></div><div class="owner"><span class="mini-avatar">{{ initials(task.owner) }}</span>{{ task.owner }}</div><div><span class="status" [class]="task.status.toLowerCase().replace(' ', '-')">{{ task.status }}</span></div><div><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span></div><div class="due" [class.overdue]="task.due === 'Today'">{{ task.due }}</div></div>} @empty {<div class="empty">No tasks match the selected filters.</div>}}<div class="table-footer"><span>Showing {{ displayedTasks().length }} of {{ displayedTaskTotal() }} tasks</span>@if (activeNav() === 'Dashboard') {<button type="button" class="activity-link" (click)="setNav('My Work')">View all tasks →</button>} @else {<div class="pagination"><button type="button" [disabled]="taskPage() === 1" (click)="changeTaskPage(taskPage() - 1)">Previous</button><span>Page {{ taskPage() }} of {{ taskPageCount() }}</span><button type="button" [disabled]="taskPage() === taskPageCount()" (click)="changeTaskPage(taskPage() + 1)">Next</button></div>}</div></section>
+        @if (activeNav() === 'Dashboard') {
+          <div class="dashboard-rail">
+            <aside class="activity"><div class="activity-head"><div><h2>Attention queue</h2><p>Upcoming work across your workspace</p></div></div>@for (task of dashboardPreview().slice(0, 4); track task.id) {<button type="button" class="activity-item activity-task" (click)="openTask(task.apiId)"><span class="activity-dot" [class.red-dot]="task.priority === 'Critical' || task.priority === 'High'" [class.amber-dot]="task.priority === 'Medium'" [class.mint-dot]="task.priority === 'Low'"></span><div><strong>{{ task.title }}</strong><p><b>{{ task.id }}</b> · {{ task.project }}</p><small>{{ task.status }} · {{ task.due }}</small></div></button>} @empty {<p class="detail-empty">No tasks require attention.</p>}<button type="button" class="activity-link" (click)="setNav('My Work')">View all tasks →</button></aside>
+            <aside class="workload-panel"><div class="activity-head"><div><h2>Workload by status</h2><p>Across all active tasks</p></div></div><div class="workload-list">@for (item of dashboardWorkload(); track item.label) {<div class="workload-row"><span>{{ item.label }}</span><div class="workload-track"><i [class]="item.tone" [style.width.%]="item.percent"></i></div><strong>{{ item.count }} <small>({{ item.percent }}%)</small></strong></div>}</div><button type="button" class="activity-link" (click)="setNav('My Work')">View task workspace →</button></aside>
+          </div>
+        }
+      </div>
+      }
+      }
     </section>
   </main>
 </div>
+}
 
-@if (showCreate()) { <div class="modal-backdrop" (click)="showCreate.set(false)"><div class="modal" (click)="$event.stopPropagation()"><div class="modal-head"><div><p class="eyebrow">NEW WORK ITEM</p><h2>Create a task</h2></div><button (click)="showCreate.set(false)">×</button></div><label>Task title<input placeholder="What needs to be done?" /></label><label>Project<select><option>Internet Banking Upgrade</option><option>Regulatory Reporting</option></select></label><div class="modal-grid"><label>Type<select><option>Bug</option><option>Requirement</option><option>Change request</option></select></label><label>Priority<select><option>Medium</option><option>High</option><option>Critical</option></select></label></div><div class="modal-actions"><button class="secondary" (click)="showCreate.set(false)">Cancel</button><button class="primary" (click)="createTask()">Create task</button></div></div></div> }
+@if (showCreate()) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><div><p class="eyebrow">NEW WORK ITEM</p><h2>Create a task</h2></div><button aria-label="Close" (click)="showCreate.set(false)">×</button></div>
+      <label>Task title<input placeholder="What needs to be done?" [value]="taskTitle()" (input)="taskTitle.set($any($event.target).value)" /></label>
+      <label>Project<select [value]="taskProjectId()" (change)="taskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      @if (!projects().length) {<p class="form-message error">No active projects are available.</p>}
+      <div class="modal-grid">
+        <label>Type<select [value]="taskType()" (change)="taskType.set($any($event.target).value)"><option value="Bug">Bug</option><option value="Requirement">Requirement</option><option value="ChangeRequest">Change request</option><option value="Enhancement">Enhancement</option><option value="Incident">Incident</option></select></label>
+        <label>Priority<select [value]="taskPriority()" (change)="taskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label>
+      </div>
+      <label>Due date<input type="date" [value]="taskDueDate()" (input)="taskDueDate.set($any($event.target).value)" /></label>
+      @if (createError()) {<p class="form-message error">{{ createError() }}</p>}
+      <div class="modal-actions"><button class="secondary" (click)="showCreate.set(false)">Cancel</button><button class="primary" [disabled]="creatingTask() || !projects().length" (click)="createTask()">{{ creatingTask() ? 'Creating...' : 'Create task' }}</button></div>
+    </div>
+  </div>
+}
+
+@if (showEditTask()) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head"><div><p class="eyebrow">TASK DETAILS</p><h2>Edit task</h2></div><button aria-label="Close" (click)="showEditTask.set(false)">×</button></div>
+      <label>Task title<input [value]="editTaskTitle()" (input)="editTaskTitle.set($any($event.target).value)" /></label>
+      <label>Description<textarea rows="4" [value]="editTaskDescription()" (input)="editTaskDescription.set($any($event.target).value)"></textarea></label>
+      <label>Project<select [value]="editTaskProjectId()" (change)="editTaskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      <div class="modal-grid"><label>Type<select [value]="editTaskType()" (change)="editTaskType.set($any($event.target).value)"><option value="Bug">Bug</option><option value="Requirement">Requirement</option><option value="ChangeRequest">Change request</option><option value="Enhancement">Enhancement</option><option value="Incident">Incident</option><option value="MeetingAction">Meeting action</option><option value="Testing">Testing</option><option value="Deployment">Deployment</option><option value="Maintenance">Maintenance</option></select></label><label>Priority<select [value]="editTaskPriority()" (change)="editTaskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label></div>
+      <label>Due date<input type="date" [value]="editTaskDueDate()" (input)="editTaskDueDate.set($any($event.target).value)" /></label>
+      @if (taskEditError()) {<p class="form-message error">{{ taskEditError() }}</p>}
+      <div class="modal-actions"><button type="button" class="secondary" (click)="showEditTask.set(false)">Cancel</button><button type="button" class="primary" [disabled]="savingTaskEdit()" (click)="saveTaskEdit()">{{ savingTaskEdit() ? 'Saving...' : 'Save changes' }}</button></div>
+    </div>
+  </div>
+}
+
+@if (showChangePassword()) {
+  <div class="modal-backdrop"><div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-head"><div><h2>Change password</h2><p class="modal-copy compact">Update the password used to access your TaskFlow account.</p></div><button aria-label="Close" (click)="showChangePassword.set(false)">×</button></div>
+    <label>Current password<input type="password" autocomplete="current-password" [value]="currentPassword()" (input)="currentPassword.set($any($event.target).value)" /></label>
+    <label>New password<input type="password" autocomplete="new-password" [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" /></label>
+    <label>Confirm new password<input type="password" autocomplete="new-password" [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" /></label>
+    @if (passwordError()) {<p class="form-message error">{{ passwordError() }}</p>} @if (passwordMessage()) {<p class="form-message success">{{ passwordMessage() }}</p>}
+    <div class="modal-actions"><button class="secondary" (click)="showChangePassword.set(false)">Cancel</button><button class="primary" [disabled]="savingPassword()" (click)="changePassword()">{{ savingPassword() ? 'Saving...' : 'Change password' }}</button></div>
+  </div></div>
+}
+
+@if (showResetPassword()) {
+  <div class="modal-backdrop"><div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-head"><div><h2>Reset password</h2><p class="modal-copy compact">Request a secure reset token for your account.</p></div><button aria-label="Close" (click)="showResetPassword.set(false)">×</button></div>
+    <label>Email<input type="email" autocomplete="username" [value]="resetEmail()" (input)="resetEmail.set($any($event.target).value)" [disabled]="resetRequested()" /></label>
+    @if (resetRequested()) {
+      <label>Reset token<input autocomplete="one-time-code" [value]="resetToken()" (input)="resetToken.set($any($event.target).value)" /></label>
+      <label>New password<input type="password" autocomplete="new-password" [value]="newPassword()" (input)="newPassword.set($any($event.target).value)" /></label>
+      <label>Confirm new password<input type="password" autocomplete="new-password" [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)" /></label>
+    }
+    @if (passwordError()) {<p class="form-message error">{{ passwordError() }}</p>} @if (passwordMessage()) {<p class="form-message success">{{ passwordMessage() }}</p>}
+    <div class="modal-actions"><button class="secondary" (click)="showResetPassword.set(false)">Cancel</button><button class="primary" [disabled]="savingPassword()" (click)="resetRequested() ? resetPassword() : requestPasswordReset()">{{ savingPassword() ? 'Please wait...' : resetRequested() ? 'Reset password' : 'Request reset' }}</button></div>
+  </div></div>
+}
+
+@if (showProjectSetup()) {
+  <div class="modal-backdrop">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">{{ activeNav() === 'Projects' ? 'PROJECT MANAGEMENT' : 'WORKSPACE SETUP' }}</p>
+          <h2>{{ activeNav() === 'Projects' ? 'Create a project' : 'Create your first project' }}</h2>
+        </div>
+        <button aria-label="Close" (click)="showProjectSetup.set(false)">×</button>
+      </div>
+      <p class="modal-copy">{{ activeNav() === 'Projects' ? 'Add a project to organize delivery and ownership.' : 'Tasks belong to projects. Add one project to finish setting up your workspace.' }}</p>
+      <label>Project name<input placeholder="e.g. Internet Banking Upgrade" [value]="projectName()" (input)="projectName.set($any($event.target).value)" /></label>
+      <label>Project key <small>(optional)</small><input placeholder="e.g. IBU" [value]="projectKey()" (input)="projectKey.set($any($event.target).value.toUpperCase())" /></label>
+      <label>Objectives <small>(optional)</small><textarea rows="3" [value]="projectObjectives()" (input)="projectObjectives.set($any($event.target).value)"></textarea></label>
+      @if (projectError()) {<p class="form-message error">{{ projectError() }}</p>}
+      <div class="modal-actions"><button class="secondary" (click)="showProjectSetup.set(false)">Cancel</button><button class="primary" [disabled]="creatingProject()" (click)="createProject()">{{ creatingProject() ? 'Creating...' : 'Create project' }}</button></div>
+    </div>
+  </div>
+}
+
+@if (showEditProject()) {
+  <div class="modal-backdrop"><div class="modal project-edit-modal" (click)="$event.stopPropagation()"><div class="modal-head"><div><p class="eyebrow">PROJECT MANAGEMENT</p><h2>Edit project</h2></div><button aria-label="Close" (click)="showEditProject.set(false)">×</button></div><div class="modal-grid"><label>Project name<input [value]="projectEditName()" (input)="projectEditName.set($any($event.target).value)" /></label><label>Project key<input [value]="projectEditKey()" (input)="projectEditKey.set($any($event.target).value)" /></label></div><label>Objectives<textarea rows="4" [value]="projectEditObjectives()" (input)="projectEditObjectives.set($any($event.target).value)"></textarea></label><div class="modal-grid"><label>Status<select [value]="projectEditStatus()" (change)="projectEditStatus.set($any($event.target).value)"><option value="Active">Active</option><option value="On hold">On hold</option><option value="Completed">Completed</option></select></label><label>Linked software<select [value]="projectEditSoftwareId()" (change)="projectEditSoftwareId.set($any($event.target).value)"><option value="">Not linked</option>@for (software of softwareApplications(); track software.id) {<option [value]="software.id">{{ software.name }}</option>}</select></label><label>Start date<input type="date" [value]="projectEditStartDate()" (input)="projectEditStartDate.set($any($event.target).value)" /></label><label>Target date<input type="date" [value]="projectEditTargetDate()" (input)="projectEditTargetDate.set($any($event.target).value)" /></label><label>Project manager<input [value]="projectEditManager()" (input)="projectEditManager.set($any($event.target).value)" /></label><label>Sponsor<input [value]="projectEditSponsor()" (input)="projectEditSponsor.set($any($event.target).value)" /></label></div>@if (projectEditError()) {<p class="form-message error">{{ projectEditError() }}</p>}<div class="modal-actions"><button type="button" class="secondary" (click)="showEditProject.set(false)">Cancel</button><button type="button" class="primary" [disabled]="savingProjectEdit()" (click)="saveProjectEdit()">{{ savingProjectEdit() ? 'Saving...' : 'Save changes' }}</button></div></div></div>
+}
+
+@if (showArchiveProject() && selectedProject(); as project) {
+  <div class="modal-backdrop"><div class="modal confirmation-modal" (click)="$event.stopPropagation()"><div class="modal-head"><div><h2>Archive project?</h2><p class="modal-copy compact">{{ project.name }} will be removed from active project lists. Existing tasks will be preserved.</p></div><button aria-label="Close" (click)="showArchiveProject.set(false)">×</button></div><div class="modal-actions"><button type="button" class="secondary" (click)="showArchiveProject.set(false)">Cancel</button><button type="button" class="danger-button" [disabled]="archivingProject()" (click)="archiveSelectedProject()">{{ archivingProject() ? 'Archiving...' : 'Archive project' }}</button></div></div></div>
+}
