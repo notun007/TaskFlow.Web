@@ -1,20 +1,370 @@
 @let h = workspace;
 @if (h.selectedTask(); as task) {
   <section class="task-details-screen" aria-labelledby="task-details-title">
-    <div class="detail-breadcrumb"><button type="button" (click)="h.closeTask()">My Work</button><span>/</span>{{ task.taskNumber }}</div>
-    <div class="detail-page-heading"><h1 id="task-details-title">Task details</h1><button type="button" class="text-button back-link" (click)="h.closeTask()">← Back to tasks</button></div>
-    <section class="task-summary"><div><h2>{{ task.title }}</h2><div class="summary-meta"><span class="status" [class]="h.statusClass(task.status)">{{ h.formatEnum(task.status) }}</span><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span><span>{{ task.taskNumber }}</span></div></div><div class="task-summary-actions"><button type="button" class="secondary" (click)="h.openTaskEditor()">Edit task</button><label class="status-control"><span class="sr-only">Task status</span><select [value]="task.status" [disabled]="h.savingTaskStatus()" (change)="h.changeTaskStatus($any($event.target).value)">@for (status of h.taskStatuses; track status) { <option [value]="status">{{ h.formatEnum(status) }}</option> }</select></label></div></section>
-    @if (h.taskDetailsError()) { <p class="form-message error detail-message">{{ h.taskDetailsError() }}</p> }
-    <div class="task-detail-grid"><div class="task-detail-main"><section class="detail-panel description-panel"><h3>Description</h3><p>{{ task.description || 'No description has been provided for this task.' }}</p></section><section class="detail-panel comments-panel"><h3>Activity &amp; comments</h3><div class="comment-list">@for (comment of task.comments; track comment.id) { <article class="comment-item"><span class="mini-avatar">{{ h.initials(comment.authorReference).slice(0, 2) }}</span><div><div class="comment-head"><strong>{{ comment.authorReference }}</strong><time>{{ comment.createdAt | date:'medium' }}</time></div><p>{{ comment.body }}</p></div></article> } @empty { <p class="detail-empty">No comments yet.</p> }</div><label class="comment-composer">Add a comment<textarea rows="4" placeholder="Write your comment here..." [value]="h.newComment()" (input)="h.newComment.set($any($event.target).value)"></textarea></label>@if (h.commentError()) { <p class="form-message error">{{ h.commentError() }}</p> }<div class="comment-actions"><button type="button" class="primary" [disabled]="h.postingComment()" (click)="h.addComment()">{{ h.postingComment() ? 'Posting...' : 'Post comment' }}</button></div></section></div>
-      <aside class="detail-panel task-information"><h3>Task information</h3><dl><div><dt>Project</dt><dd>{{ task.projectName }}</dd></div><div><dt>Type</dt><dd>{{ h.formatEnum(task.type) }}</dd></div><div><dt>Priority</dt><dd>{{ task.priority }}</dd></div><div><dt>Due date</dt><dd>{{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}</dd></div><div><dt>Created on</dt><dd>{{ task.createdAt | date:'medium' }}</dd></div><div><dt>Last updated</dt><dd>{{ task.updatedAt ? (task.updatedAt | date:'medium') : 'Not updated' }}</dd></div></dl><section class="assignment-section"><h3>Assignments</h3><div class="assignment-list">@for (assignment of task.assignments; track assignment.id) { <div class="assignment-item"><span class="mini-avatar">{{ h.initials(assignment.displayName || assignment.partyReference).slice(0, 2) }}</span><div><strong>{{ assignment.displayName || assignment.partyReference }}</strong><small>{{ h.formatEnum(assignment.responsibility) }}</small></div><button type="button" aria-label="Remove assignment" (click)="h.removeAssignment(assignment.id)">×</button></div> } @empty { <p class="detail-empty">No assignments yet.</p> }</div><div class="assignment-form"><label>Responsibility<select [value]="h.assignmentResponsibility()" (change)="h.assignmentResponsibility.set($any($event.target).value)"><option value="Owner">Owner</option><option value="Assignee">Assignee</option><option value="SupportingTeam">Supporting team</option><option value="Vendor">Vendor</option><option value="Approver">Approver</option></select></label><label>Display name<input [value]="h.assignmentDisplayName()" (input)="h.assignmentDisplayName.set($any($event.target).value)" placeholder="Name" /></label><label>Reference<input [value]="h.assignmentPartyReference()" (input)="h.assignmentPartyReference.set($any($event.target).value)" placeholder="Email, user ID, team, or vendor" /></label>@if (h.assignmentError()) { <p class="form-message error">{{ h.assignmentError() }}</p> }<button type="button" class="secondary assignment-add" [disabled]="h.savingAssignment()" (click)="h.addAssignment()">{{ h.savingAssignment() ? 'Adding...' : 'Add assignment' }}</button></div></section></aside>
+    <div class="detail-breadcrumb">
+      <button type="button" (click)="h.closeTask()">My Work</button><span>/</span
+      >{{ task.taskNumber }}
+    </div>
+    <div class="detail-page-heading">
+      <h1 id="task-details-title">Task details</h1>
+      <button type="button" class="text-button back-link" (click)="h.closeTask()">
+        ← Back to tasks
+      </button>
+    </div>
+    <section class="task-summary">
+      <div>
+        <h2>{{ task.title }}</h2>
+        <div class="summary-meta">
+          <span class="status" [class]="h.statusClass(task.status)">{{
+            h.formatEnum(task.status)
+          }}</span
+          ><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span
+          ><span>{{ task.taskNumber }}</span>
+        </div>
+      </div>
+      <div class="task-summary-actions">
+        <button type="button" class="secondary" (click)="h.openTaskEditor()">Edit task</button
+        ><input
+          class="transition-note"
+          aria-label="Transition note"
+          placeholder="Transition note (optional)"
+          maxlength="2000"
+          [value]="h.transitionComment()"
+          (input)="h.transitionComment.set($any($event.target).value)"
+        /><label class="status-control"
+          ><span class="sr-only">Workflow action</span
+          ><select
+            [value]="''"
+            [disabled]="h.savingTaskStatus() || !task.allowedTransitions.length"
+            (change)="h.changeTaskStatus($any($event.target).value)"
+          >
+            <option value="" disabled>
+              {{ task.allowedTransitions.length ? 'Move to…' : 'No available actions' }}
+            </option>
+            @for (status of task.allowedTransitions; track status) {
+              <option [value]="status">{{ h.formatEnum(status) }}</option>
+            }
+          </select></label
+        >
+      </div>
+    </section>
+    @if (h.taskDetailsError()) {
+      <p class="form-message error detail-message">{{ h.taskDetailsError() }}</p>
+    }
+    <div class="task-detail-grid">
+      <div class="task-detail-main">
+        <section class="detail-panel description-panel">
+          <h3>Description</h3>
+          <p>{{ task.description || 'No description has been provided for this task.' }}</p>
+        </section>
+        <section class="detail-panel workflow-history">
+          <h3>Workflow history</h3>
+          <div class="transition-list">
+            @for (entry of task.statusHistory; track entry.id) {
+              <article class="transition-item">
+                <span class="transition-marker"></span>
+                <div>
+                  <div class="comment-head">
+                    <strong
+                      >{{ h.formatEnum(entry.fromStatus) }} →
+                      {{ h.formatEnum(entry.toStatus) }}</strong
+                    ><time>{{ entry.createdAt | date: 'medium' }}</time>
+                  </div>
+                  <p>{{ entry.actorReference }}</p>
+                  @if (entry.comment) {
+                    <blockquote>{{ entry.comment }}</blockquote>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <p class="detail-empty">No workflow transitions have been recorded yet.</p>
+            }
+          </div>
+        </section>
+        <section class="detail-panel comments-panel">
+          <h3>Activity &amp; comments</h3>
+          <div class="comment-list">
+            @for (comment of task.comments; track comment.id) {
+              <article class="comment-item">
+                <span class="mini-avatar">{{
+                  h.initials(comment.authorReference).slice(0, 2)
+                }}</span>
+                <div>
+                  <div class="comment-head">
+                    <strong>{{ comment.authorReference }}</strong
+                    ><time>{{ comment.createdAt | date: 'medium' }}</time>
+                  </div>
+                  <p>{{ comment.body }}</p>
+                </div>
+              </article>
+            } @empty {
+              <p class="detail-empty">No comments yet.</p>
+            }
+          </div>
+          <label class="comment-composer"
+            >Add a comment<textarea
+              rows="4"
+              placeholder="Write your comment here..."
+              [value]="h.newComment()"
+              (input)="h.newComment.set($any($event.target).value)"
+            ></textarea>
+          </label>
+          @if (h.commentError()) {
+            <p class="form-message error">{{ h.commentError() }}</p>
+          }
+          <div class="comment-actions">
+            <button
+              type="button"
+              class="primary"
+              [disabled]="h.postingComment()"
+              (click)="h.addComment()"
+            >
+              {{ h.postingComment() ? 'Posting...' : 'Post comment' }}
+            </button>
+          </div>
+        </section>
+      </div>
+      <aside class="detail-panel task-information">
+        <h3>Task information</h3>
+        <dl>
+          <div>
+            <dt>Project</dt>
+            <dd>{{ task.projectName }}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>{{ h.formatEnum(task.type) }}</dd>
+          </div>
+          <div>
+            <dt>Priority</dt>
+            <dd>{{ task.priority }}</dd>
+          </div>
+          <div>
+            <dt>Due date</dt>
+            <dd>{{ task.dueDate ? (task.dueDate | date: 'mediumDate') : 'No due date' }}</dd>
+          </div>
+          @for (field of task.customFields; track field.customFieldDefinitionId) {
+            <div>
+              <dt>{{ field.name }}</dt>
+              <dd>{{ field.type === 'Boolean' ? (field.value === 'true' ? 'Yes' : 'No') : field.displayValues.join(', ') || 'Not set' }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Created on</dt>
+            <dd>{{ task.createdAt | date: 'medium' }}</dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>{{ task.updatedAt ? (task.updatedAt | date: 'medium') : 'Not updated' }}</dd>
+          </div>
+        </dl>
+        <section class="attachment-section">
+          <div class="detail-section-heading"><h3>Attachments</h3><label class="secondary attachment-upload">{{ h.uploadingAttachment() ? 'Uploading...' : 'Add file' }}<input type="file" [disabled]="h.uploadingAttachment()" accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.csv,.docx,.xlsx" (change)="h.uploadAttachment($any($event.target).files); $any($event.target).value = ''" /></label></div>
+          @if (h.attachmentError()) { <p class="form-message error">{{ h.attachmentError() }}</p> }
+          <div class="attachment-list">
+            @for (attachment of task.attachments; track attachment.id) {
+              <div class="attachment-item"><div><strong>{{ attachment.fileName }}</strong><small>{{ h.formatFileSize(attachment.size) }} · {{ attachment.uploadedBy }} · {{ attachment.createdAt | date: 'medium' }}</small></div><div><button type="button" class="text-action" (click)="h.downloadAttachment(attachment.id, attachment.fileName)">Download</button><button type="button" aria-label="Remove attachment" (click)="h.deleteAttachment(attachment.id)">×</button></div></div>
+            } @empty { <p class="detail-empty">No attachments yet.</p> }
+          </div>
+        </section>
+        <section class="task-links-section">
+          <h3>Linked work</h3>
+          <div class="task-link-list">
+            @for (link of task.links; track link.id) {
+              <div class="task-link-item">
+                <div><small>{{ h.taskLinkLabel(link.type, link.isOutgoing) }}</small><strong>{{ link.otherTaskNumber }}</strong><span>{{ link.otherTaskTitle }}</span></div>
+                <span class="status">{{ h.formatEnum(link.otherTaskStatus) }}</span>
+                <button type="button" aria-label="Remove task link" (click)="h.removeTaskLink(link.id)">×</button>
+              </div>
+            } @empty { <p class="detail-empty">No linked tasks yet.</p> }
+          </div>
+          <div class="task-link-form"><label>Relationship<select [value]="h.linkType()" (change)="h.linkType.set($any($event.target).value)"><option value="Blocks">Blocks</option><option value="RelatesTo">Relates to</option><option value="Duplicates">Duplicates</option><option value="ParentOf">Parent of</option></select></label><label>Target task number<input placeholder="TF-..." [value]="h.linkTaskReference()" (input)="h.linkTaskReference.set($any($event.target).value)" /></label>@if (h.linkError()) { <p class="form-message error">{{ h.linkError() }}</p> }<button type="button" class="secondary" [disabled]="h.savingLink()" (click)="h.addTaskLink()">{{ h.savingLink() ? 'Linking...' : 'Add link' }}</button></div>
+        </section>
+        <section class="assignment-section">
+          <h3>Assignments</h3>
+          <div class="assignment-list">
+            @for (assignment of task.assignments; track assignment.id) {
+              <div class="assignment-item">
+                <span class="mini-avatar">{{
+                  h.initials(assignment.displayName || assignment.partyReference).slice(0, 2)
+                }}</span>
+                <div>
+                  <strong>{{ assignment.displayName || assignment.partyReference }}</strong
+                  ><small>{{ h.formatEnum(assignment.responsibility) }}</small>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Remove assignment"
+                  (click)="h.removeAssignment(assignment.id)"
+                >
+                  ×
+                </button>
+              </div>
+            } @empty {
+              <p class="detail-empty">No assignments yet.</p>
+            }
+          </div>
+          <div class="assignment-form">
+            <label
+              >Responsibility<select
+                [value]="h.assignmentResponsibility()"
+                (change)="h.assignmentResponsibility.set($any($event.target).value)"
+              >
+                <option value="Owner">Owner</option>
+                <option value="Assignee">Assignee</option>
+                <option value="SupportingTeam">Supporting team</option>
+                <option value="Vendor">Vendor</option>
+                <option value="Approver">Approver</option>
+              </select></label
+            ><label
+              >Display name<input
+                [value]="h.assignmentDisplayName()"
+                (input)="h.assignmentDisplayName.set($any($event.target).value)"
+                placeholder="Name" /></label
+            ><label
+              >Reference<input
+                [value]="h.assignmentPartyReference()"
+                (input)="h.assignmentPartyReference.set($any($event.target).value)"
+                placeholder="Email, user ID, team, or vendor"
+            /></label>
+            @if (h.assignmentError()) {
+              <p class="form-message error">{{ h.assignmentError() }}</p>
+            }
+            <button
+              type="button"
+              class="secondary assignment-add"
+              [disabled]="h.savingAssignment()"
+              (click)="h.addAssignment()"
+            >
+              {{ h.savingAssignment() ? 'Adding...' : 'Add assignment' }}
+            </button>
+          </div>
+        </section>
+      </aside>
     </div>
   </section>
 } @else {
-  <div class="page-heading"><div><p class="eyebrow">{{ h.today | date:'EEEE, MMMM d, y' | uppercase }}</p><h1>My Work</h1><p class="subheading">Review, filter, and update tasks across your workspace.</p></div><button class="primary" (click)="h.openCreate()">＋ Create task</button></div>
-  <div class="section-head"><div><h2>My work</h2><p>Tasks assigned to you or requiring your attention</p></div></div>
-  <div class="task-filters"><label>Status<select [value]="h.taskStatusFilter()" (change)="h.taskStatusFilter.set($any($event.target).value)"><option value="">All statuses</option>@for (status of h.taskStatuses; track status) { <option [value]="status">{{ h.formatEnum(status) }}</option> }</select></label><label>Priority<select [value]="h.taskPriorityFilter()" (change)="h.taskPriorityFilter.set($any($event.target).value)"><option value="">All priorities</option><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></label><label>Project<select [value]="h.taskProjectFilter()" (change)="h.taskProjectFilter.set($any($event.target).value)"><option value="">All projects</option>@for (project of h.projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><label>Sort<select [value]="h.taskSort()" (change)="h.taskSort.set($any($event.target).value)"><option value="dueDate:asc">Due date ↑</option><option value="dueDate:desc">Due date ↓</option><option value="title:asc">Title A–Z</option><option value="title:desc">Title Z–A</option><option value="priority:desc">Priority high–low</option><option value="status:asc">Status</option></select></label><button type="button" class="primary" (click)="h.applyTaskFilters()">Apply</button><button type="button" class="secondary" (click)="h.clearTaskFilters()">Clear</button></div>
-  <section class="task-panel"><div class="table-head"><span>Task</span><span>Project / software</span><span>Owner</span><span>Status</span><span>Priority</span><span>Due</span></div>
-    @if (h.loadingTasks()) { <div class="empty">Loading tasks...</div> } @else if (h.taskLoadError()) { <div class="empty">{{ h.taskLoadError() }}</div> } @else { @for (task of h.filteredTasks(); track task.id) { <div class="task-row" role="button" tabindex="0" (click)="h.openTask(task.apiId)" (keydown.enter)="h.openTask(task.apiId)"><div class="task-name"><span class="task-id">{{ task.id }}</span><strong>{{ task.title }}</strong><small>{{ task.severity }} severity</small></div><div class="project"><strong>{{ task.project }}</strong><small>{{ task.software }}</small></div><div class="owner"><span class="mini-avatar">{{ h.initials(task.owner) }}</span>{{ task.owner }}</div><div><span class="status" [class]="task.status.toLowerCase().replace(' ', '-')">{{ task.status }}</span></div><div><span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span></div><div class="due" [class.overdue]="task.due === 'Today'">{{ task.due }}</div></div> } @empty { <div class="empty">No tasks match the selected filters.</div> } }
-    <div class="table-footer"><span>Showing {{ h.filteredTasks().length }} of {{ h.taskTotal() }} tasks</span><div class="pagination"><button type="button" [disabled]="h.taskPage() === 1" (click)="h.changeTaskPage(h.taskPage() - 1)">Previous</button><span>Page {{ h.taskPage() }} of {{ h.taskPageCount() }}</span><button type="button" [disabled]="h.taskPage() === h.taskPageCount()" (click)="h.changeTaskPage(h.taskPage() + 1)">Next</button></div></div>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">{{ h.today | date: 'EEEE, MMMM d, y' | uppercase }}</p>
+      <h1>My Work</h1>
+      <p class="subheading">Review, filter, and update tasks across your workspace.</p>
+    </div>
+    <button class="primary" (click)="h.openCreate()">＋ Create task</button>
+  </div>
+  <div class="section-head">
+    <div>
+      <h2>My work</h2>
+      <p>Tasks assigned to you or requiring your attention</p>
+    </div>
+  </div>
+  <div class="task-filters">
+    <label
+      >Status<select
+        [value]="h.taskStatusFilter()"
+        (change)="h.taskStatusFilter.set($any($event.target).value)"
+      >
+        <option value="">All statuses</option>
+        @for (status of h.taskStatuses; track status) {
+          <option [value]="status">{{ h.formatEnum(status) }}</option>
+        }
+      </select></label
+    ><label
+      >Priority<select
+        [value]="h.taskPriorityFilter()"
+        (change)="h.taskPriorityFilter.set($any($event.target).value)"
+      >
+        <option value="">All priorities</option>
+        <option value="Critical">Critical</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select></label
+    ><label
+      >Project<select
+        [value]="h.taskProjectFilter()"
+        (change)="h.taskProjectFilter.set($any($event.target).value)"
+      >
+        <option value="">All projects</option>
+        @for (project of h.projects(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select></label
+    ><label
+      >Sort<select [value]="h.taskSort()" (change)="h.taskSort.set($any($event.target).value)">
+        <option value="dueDate:asc">Due date ↑</option>
+        <option value="dueDate:desc">Due date ↓</option>
+        <option value="title:asc">Title A–Z</option>
+        <option value="title:desc">Title Z–A</option>
+        <option value="priority:desc">Priority high–low</option>
+        <option value="status:asc">Status</option>
+      </select></label
+    ><button type="button" class="primary" (click)="h.applyTaskFilters()">Apply</button
+    ><button type="button" class="secondary" (click)="h.clearTaskFilters()">Clear</button>
+  </div>
+  <section class="task-panel">
+    <div class="table-head">
+      <span>Task</span><span>Project / software</span><span>Owner</span><span>Status</span
+      ><span>Priority</span><span>Due</span>
+    </div>
+    @if (h.loadingTasks()) {
+      <div class="empty">Loading tasks...</div>
+    } @else if (h.taskLoadError()) {
+      <div class="empty">{{ h.taskLoadError() }}</div>
+    } @else {
+      @for (task of h.filteredTasks(); track task.id) {
+        <div
+          class="task-row"
+          role="button"
+          tabindex="0"
+          (click)="h.openTask(task.apiId)"
+          (keydown.enter)="h.openTask(task.apiId)"
+        >
+          <div class="task-name">
+            <span class="task-id">{{ task.id }}</span
+            ><strong>{{ task.title }}</strong
+            ><small>{{ task.severity }} severity</small>
+          </div>
+          <div class="project">
+            <strong>{{ task.project }}</strong
+            ><small>{{ task.software }}</small>
+          </div>
+          <div class="owner">
+            <span class="mini-avatar">{{ h.initials(task.owner) }}</span
+            >{{ task.owner }}
+          </div>
+          <div>
+            <span class="status" [class]="task.status.toLowerCase().replace(' ', '-')">{{
+              task.status
+            }}</span>
+          </div>
+          <div>
+            <span class="priority" [class]="task.priority.toLowerCase()">{{ task.priority }}</span>
+          </div>
+          <div class="due" [class.overdue]="task.due === 'Today'">{{ task.due }}</div>
+        </div>
+      } @empty {
+        <div class="empty">No tasks match the selected filters.</div>
+      }
+    }
+    <div class="table-footer">
+      <span>Showing {{ h.filteredTasks().length }} of {{ h.taskTotal() }} tasks</span>
+      <div class="pagination">
+        <button
+          type="button"
+          [disabled]="h.taskPage() === 1"
+          (click)="h.changeTaskPage(h.taskPage() - 1)"
+        >
+          Previous</button
+        ><span>Page {{ h.taskPage() }} of {{ h.taskPageCount() }}</span
+        ><button
+          type="button"
+          [disabled]="h.taskPage() === h.taskPageCount()"
+          (click)="h.changeTaskPage(h.taskPage() + 1)"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   </section>
 }

@@ -1,0 +1,23 @@
+import { Component, inject, OnInit, signal, ViewEncapsulation } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ReferenceItem, ReleaseItem, ReleasePlan, ReleaseTaskItem, SaveReleaseRequest, TaskApiService } from '../../task-api.service';
+
+@Component({ selector: 'app-releases-page', standalone: true, imports: [DatePipe], templateUrl: './releases.html', styleUrl: './releases.scss', encapsulation: ViewEncapsulation.None })
+export class ReleasesPage implements OnInit {
+  private readonly api = inject(TaskApiService); readonly projects = signal<ReferenceItem[]>([]); readonly projectId = signal(''); readonly plan = signal<ReleasePlan | null>(null); readonly loading = signal(false); readonly saving = signal(false); readonly error = signal(''); readonly message = signal('');
+  readonly showEditor = signal(false); readonly editingId = signal<string | null>(null); readonly name = signal(''); readonly description = signal(''); readonly startDate = signal(''); readonly releaseDate = signal(''); readonly draggedTask = signal<ReleaseTaskItem | null>(null); readonly dropTarget = signal('');
+  ngOnInit() { this.api.getProjects().subscribe({ next: projects => { this.projects.set(projects); if (projects.length) { this.projectId.set(projects[0].id); this.load(); } } }); }
+  selectProject(id: string) { this.projectId.set(id); this.plan.set(null); if (id) this.load(); }
+  load() { if (!this.projectId()) return; this.loading.set(true); this.error.set(''); this.api.getReleasePlan(this.projectId()).subscribe({ next: plan => { this.plan.set(plan); this.loading.set(false); }, error: () => { this.loading.set(false); this.error.set('Releases could not be loaded.'); } }); }
+  openCreate() { this.editingId.set(null); this.name.set(''); this.description.set(''); this.startDate.set(''); this.releaseDate.set(''); this.showEditor.set(true); }
+  openEdit(release: ReleaseItem) { this.editingId.set(release.id); this.name.set(release.name); this.description.set(release.description ?? ''); this.startDate.set(release.startDate ?? ''); this.releaseDate.set(release.releaseDate ?? ''); this.showEditor.set(true); }
+  saveRelease() { if (!this.name().trim()) { this.error.set('Release name is required.'); return; } const request: SaveReleaseRequest = { name: this.name().trim(), description: this.description().trim() || null, projectId: this.projectId(), startDate: this.startDate() || null, releaseDate: this.releaseDate() || null }; this.saving.set(true); const call = this.editingId() ? this.api.updateRelease(this.editingId()!, request) : this.api.createRelease(request); call.subscribe({ next: () => { this.saving.set(false); this.showEditor.set(false); this.message.set(this.editingId() ? 'Release updated.' : 'Release created.'); this.load(); }, error: (error: HttpErrorResponse) => { this.saving.set(false); this.error.set(error.error?.message || 'Release could not be saved.'); } }); }
+  publish(release: ReleaseItem) { this.saving.set(true); this.api.publishRelease(release.id).subscribe({ next: () => { this.saving.set(false); this.message.set(`${release.name} released.`); this.load(); }, error: (error: HttpErrorResponse) => { this.saving.set(false); this.error.set(error.error?.message || 'Version could not be released.'); } }); }
+  archive(release: ReleaseItem) { this.saving.set(true); this.api.archiveRelease(release.id).subscribe({ next: () => { this.saving.set(false); this.message.set(`${release.name} archived.`); this.load(); }, error: () => { this.saving.set(false); this.error.set('Version could not be archived.'); } }); }
+  startDrag(task: ReleaseTaskItem, event: DragEvent) { this.draggedTask.set(task); event.dataTransfer?.setData('text/plain', task.id); }
+  allowDrop(target: string, event: DragEvent) { event.preventDefault(); this.dropTarget.set(target); }
+  endDrag() { this.draggedTask.set(null); this.dropTarget.set(''); }
+  drop(releaseId: string | null, event: DragEvent) { event.preventDefault(); const task = this.draggedTask(); this.endDrag(); if (!task) return; this.saving.set(true); this.api.assignTaskToRelease(task.id, releaseId).subscribe({ next: () => { this.saving.set(false); this.message.set(releaseId ? `${task.taskNumber} assigned to version.` : `${task.taskNumber} removed from version.`); this.load(); }, error: (error: HttpErrorResponse) => { this.saving.set(false); this.error.set(error.error?.message || 'Task could not be assigned.'); } }); }
+  progress(release: ReleaseItem) { return release.totalTasks ? Math.round(release.completedTasks / release.totalTasks * 100) : 0; }
+}

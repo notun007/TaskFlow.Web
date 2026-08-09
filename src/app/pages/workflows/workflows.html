@@ -1,0 +1,92 @@
+<section class="operations-screen workflow-screen">
+  <div class="operations-heading">
+    <div>
+      <h1>Workflows</h1>
+      <p>Configure allowed task status transitions globally or for a specific work item type.</p>
+    </div>
+    <button type="button" class="primary" [disabled]="saving() || loading()" (click)="save()">
+      {{ saving() ? 'Saving...' : 'Save workflow' }}
+    </button>
+  </div>
+  <section class="workflow-toolbar">
+    <label
+      >Workflow context<select
+        [value]="selectedTypeId()"
+        (change)="selectType($any($event.target).value)"
+      >
+        <option value="">Default — all work item types</option>
+        @for (type of workItemTypes(); track type.id) {
+          <option [value]="type.id">{{ type.name }}</option>
+        }
+      </select></label
+    ><label
+      >Workflow name<input [value]="name()" (input)="name.set($any($event.target).value)"
+    /></label>
+    @if (workflow()?.isInherited) {
+      <span class="inheritance-badge">Inherited from default</span>
+    }
+  </section>
+  @if (error()) {
+    <p class="form-message error">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="form-message success">{{ message() }}</p>
+  }
+  <section class="workflow-card">
+    <div class="workflow-card-head">
+      <div>
+        <h2>Transitions</h2>
+        <p>Each row defines one action available from the current status.</p>
+      </div>
+      <button type="button" class="secondary" (click)="addTransition()">+ Add transition</button>
+    </div>
+    <div class="transition-head">
+      <span>From status</span><span></span><span>To status</span><span>Order</span><span></span>
+    </div>
+    @if (loading()) {
+      <div class="empty">Loading workflow...</div>
+    } @else {
+      @for (transition of transitions(); track $index; let index = $index) {
+        <div class="workflow-transition-row">
+          <select
+            [value]="transition.fromStatus"
+            (change)="updateTransition(index, 'fromStatus', $any($event.target).value)"
+          >
+            @for (status of workflow()?.statuses ?? []; track status) {
+              <option [value]="status">{{ status }}</option>
+            }</select
+          ><span class="transition-arrow">→</span
+          ><select
+            [value]="transition.toStatus"
+            (change)="updateTransition(index, 'toStatus', $any($event.target).value)"
+          >
+            @for (status of workflow()?.statuses ?? []; track status) {
+              <option [value]="status">{{ status }}</option>
+            }</select
+          ><input
+            type="number"
+            [value]="transition.sortOrder"
+            (input)="updateSortOrder(index, +$any($event.target).value)"
+          /><button
+            type="button"
+            class="remove-transition"
+            aria-label="Remove transition"
+            (click)="removeTransition(index)"
+          >
+            ×
+          </button>
+        </div>
+      } @empty {
+        <div class="empty">No transitions configured.</div>
+      }
+    }
+  </section>
+  @if (selectedTypeId() && !workflow()?.isInherited) {
+    <div class="workflow-footer">
+      <p>Resetting removes this override and restores the default workflow.</p>
+      <button type="button" class="danger-button" [disabled]="saving()" (click)="reset()">
+        Reset to default
+      </button>
+    </div>
+  }
+</section>

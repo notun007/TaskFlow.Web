@@ -1,0 +1,11 @@
+.field-head,.field-row { display:grid; grid-template-columns:2fr .8fr 1.3fr .7fr auto; gap:14px; align-items:center; }
+.field-head { padding:12px 16px; color:#718097; font-size:9px; font-weight:700; text-transform:uppercase; }
+.field-row { padding:14px 16px; border-top:1px solid #edf1f5; color:#405069; }
+.field-row strong,.field-row small { display:block; }.field-row small { margin-top:4px; color:#8290a5; font-size:10px; }
+.custom-field-modal { width:min(680px, calc(100vw - 32px)); max-height:calc(100vh - 40px); overflow:auto; }
+.custom-field-modal fieldset { margin:4px 0 14px; padding:12px 14px; border:1px solid #dce3ed; border-radius:6px; }
+.custom-field-modal legend { padding:0 5px; color:#60708a; font-size:11px; font-weight:700; }
+.checkbox-label { display:flex !important; align-items:center; gap:8px; padding-top:10px; }.checkbox-label input { width:auto; }
+.context-global { padding-top:0; }.context-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px 12px; margin-top:8px; }
+.screen-placement { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:5px; }
+@media (max-width:720px) { .field-head,.field-row { grid-template-columns:1.5fr .8fr auto; }.field-head span:nth-child(3),.field-row>span:nth-child(3),.field-head span:nth-child(4),.field-row>span:nth-child(4) { display:none; }.context-grid { grid-template-columns:1fr 1fr; } }

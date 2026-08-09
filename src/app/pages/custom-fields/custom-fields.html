@@ -1,0 +1,30 @@
+<section class="operations-screen">
+  <div class="operations-heading"><div><h1>Custom Fields</h1><p>Define reusable data fields and control which work item types use them.</p></div><button type="button" class="primary" (click)="openCreate()">+ New field</button></div>
+  <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search custom fields..." [value]="search()" (input)="search.set($any($event.target).value)" /></label><span>{{ filtered().length }} fields</span></div>
+  @if (loadError()) { <p class="form-message error">{{ loadError() }}</p> }
+  <section class="operations-table compact custom-field-table">
+    <div class="field-head"><span>Field</span><span>Type</span><span>Context</span><span>Status</span><span></span></div>
+    @if (loading()) { <div class="empty">Loading custom fields...</div> }
+    @else { @for (item of filtered(); track item.id) {
+      <div class="field-row"><span><strong>{{ item.name }}</strong><small>{{ item.key }} · {{ item.description || 'No description' }}</small></span><span>{{ item.type }}</span><span>{{ item.contexts.length === 1 ? item.contexts[0].workItemType : item.contexts.length + ' work item types' }}</span><span><span class="status" [class.closed]="!item.isActive">{{ item.isActive ? 'Active' : 'Inactive' }}</span></span><button type="button" class="secondary" (click)="openEdit(item)">Edit</button></div>
+    } @empty { <div class="empty">No custom fields found.</div> } }
+  </section>
+</section>
+
+@if (showEditor()) {
+  <div class="modal-backdrop"><div class="modal custom-field-modal" role="dialog" aria-modal="true" aria-labelledby="field-editor-title">
+    <div class="modal-head"><div><p class="eyebrow">WORK CONFIGURATION</p><h2 id="field-editor-title">{{ editingId() ? 'Edit custom field' : 'Create custom field' }}</h2></div><button type="button" aria-label="Close" (click)="closeEditor()">×</button></div>
+    <div class="modal-grid"><label>Key<input [disabled]="!!editingId()" placeholder="e.g. RiskRating" [value]="key()" (input)="key.set($any($event.target).value)" /></label><label>Name<input [value]="name()" (input)="name.set($any($event.target).value)" /></label></div>
+    <label>Description<textarea rows="2" [value]="description()" (input)="description.set($any($event.target).value)"></textarea></label>
+    <div class="modal-grid"><label>Field type<select [disabled]="!!editingId()" [value]="type()" (change)="type.set($any($event.target).value)">@for (fieldType of fieldTypes; track fieldType) { <option [value]="fieldType">{{ fieldType }}</option> }</select></label><label>Sort order<input type="number" [value]="sortOrder()" (input)="sortOrder.set(+$any($event.target).value)" /></label></div>
+    @if (requiresOptions()) { <label>Options <small>(one per line)</small><textarea rows="4" placeholder="Low&#10;Medium&#10;High" [value]="optionLines()" (input)="optionLines.set($any($event.target).value)"></textarea></label> }
+    <fieldset><legend>Context</legend><label class="checkbox-label context-global"><input type="checkbox" [checked]="globalContext()" (change)="globalContext.set($any($event.target).checked)" /> Available for all work item types</label>
+      @if (!globalContext()) { <div class="context-grid">@for (itemType of workItemTypes(); track itemType.id) { <label class="checkbox-label"><input type="checkbox" [checked]="selectedTypeIds().includes(itemType.id)" (change)="toggleType(itemType.id, $any($event.target).checked)" /> {{ itemType.name }}</label> }</div> }
+    </fieldset>
+    <div class="modal-grid"><label class="checkbox-label"><input type="checkbox" [checked]="required()" (change)="required.set($any($event.target).checked)" /> Required</label><label>Default value<input [value]="defaultValue()" (input)="defaultValue.set($any($event.target).value)" /></label></div>
+    <fieldset><legend>Screen placement</legend><label>Section name<input [value]="sectionName()" (input)="sectionName.set($any($event.target).value)" /></label><div class="screen-placement"><label class="checkbox-label"><input type="checkbox" [checked]="showOnCreate()" (change)="showOnCreate.set($any($event.target).checked)" /> Create screen</label><label class="checkbox-label"><input type="checkbox" [checked]="showOnEdit()" (change)="showOnEdit.set($any($event.target).checked)" /> Edit screen</label><label class="checkbox-label"><input type="checkbox" [checked]="showOnDetails()" (change)="showOnDetails.set($any($event.target).checked)" /> Details screen</label></div></fieldset>
+    @if (editingId()) { <label class="checkbox-label"><input type="checkbox" [checked]="isActive()" (change)="isActive.set($any($event.target).checked)" /> Active</label> }
+    @if (saveError()) { <p class="form-message error">{{ saveError() }}</p> }
+    <div class="modal-actions"><button type="button" class="secondary" (click)="closeEditor()">Cancel</button><button type="button" class="primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving...' : editingId() ? 'Save changes' : 'Create field' }}</button></div>
+  </div></div>
+}
