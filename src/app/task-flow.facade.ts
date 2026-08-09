@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiTask, ApiTaskDetails, AuditListItem, DepartmentListItem, ProjectDetails, ProjectListItem, ReferenceItem, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem } from './task-api.service';
+import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
 
 type Task = { apiId: string; id: string; title: string; project: string; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
 
@@ -21,11 +21,14 @@ export class TaskFlowFacade implements OnInit {
   readonly showChangePassword = signal(false);
   readonly showResetPassword = signal(false);
   readonly projects = signal<ReferenceItem[]>([]);
+  readonly workItemTypes = signal<WorkItemTypeReference[]>([]);
   readonly taskTitle = signal('');
   readonly taskProjectId = signal('');
   readonly taskType = signal('Bug');
   readonly taskPriority = signal('Medium');
   readonly taskDueDate = signal('');
+  readonly createCustomFields = signal<ApplicableCustomField[]>([]);
+  readonly createCustomFieldValues = signal<Record<string, string | string[]>>({});
   readonly createError = signal('');
   readonly creatingTask = signal(false);
   readonly loginEmail = signal('');
@@ -66,6 +69,7 @@ export class TaskFlowFacade implements OnInit {
   readonly loadingTaskDetails = signal(false);
   readonly taskDetailsError = signal('');
   readonly savingTaskStatus = signal(false);
+  readonly transitionComment = signal('');
   readonly newComment = signal('');
   readonly postingComment = signal(false);
   readonly commentError = signal('');
@@ -76,6 +80,8 @@ export class TaskFlowFacade implements OnInit {
   readonly editTaskType = signal('Bug');
   readonly editTaskPriority = signal('Medium');
   readonly editTaskDueDate = signal('');
+  readonly editCustomFields = signal<ApplicableCustomField[]>([]);
+  readonly editCustomFieldValues = signal<Record<string, string | string[]>>({});
   readonly savingTaskEdit = signal(false);
   readonly taskEditError = signal('');
   readonly assignmentResponsibility = signal('Assignee');
@@ -83,6 +89,12 @@ export class TaskFlowFacade implements OnInit {
   readonly assignmentDisplayName = signal('');
   readonly savingAssignment = signal(false);
   readonly assignmentError = signal('');
+  readonly linkType = signal('Blocks');
+  readonly linkTaskReference = signal('');
+  readonly savingLink = signal(false);
+  readonly linkError = signal('');
+  readonly uploadingAttachment = signal(false);
+  readonly attachmentError = signal('');
   readonly projectRecords = signal<ProjectListItem[]>([]);
   readonly selectedProject = signal<ProjectDetails | null>(null);
   readonly projectSearch = signal('');
@@ -169,7 +181,7 @@ export class TaskFlowFacade implements OnInit {
     this.router.events.subscribe(event => {
       if (!(event instanceof NavigationEnd)) return;
       const path = event.urlAfterRedirects.split('?')[0].replace(/^\//, '');
-      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
+      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
       this.activeNav.set(section);
       this.loadSection(section);
     });
@@ -196,6 +208,13 @@ export class TaskFlowFacade implements OnInit {
         if (projects.length && !this.taskProjectId()) this.taskProjectId.set(projects[0].id);
       },
       error: () => this.projects.set([])
+    });
+    this.taskApi.getWorkItemTypeReferences().subscribe({
+      next: types => {
+        this.workItemTypes.set(types);
+        if (types.length && !types.some(type => type.key === this.taskType())) this.taskType.set(types[0].key);
+      },
+      error: () => this.workItemTypes.set([])
     });
   }
 
@@ -362,16 +381,17 @@ export class TaskFlowFacade implements OnInit {
     if (!task || task.status === status) return;
     this.savingTaskStatus.set(true);
     this.taskDetailsError.set('');
-    this.taskApi.changeTaskStatus(task.id, status).subscribe({
-      next: () => {
+    this.taskApi.changeTaskStatus(task.id, status, this.transitionComment().trim() || null).subscribe({
+      next: updated => {
         this.savingTaskStatus.set(false);
-        this.selectedTask.update(current => current ? { ...current, status, updatedAt: new Date().toISOString() } : current);
+        this.selectedTask.set(updated);
+        this.transitionComment.set('');
         this.tasks.update(tasks => tasks.map(item => item.apiId === task.id ? { ...item, status: this.formatEnum(status) } : item));
         this.loadDashboard();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.savingTaskStatus.set(false);
-        this.taskDetailsError.set('Task status could not be changed.');
+        this.taskDetailsError.set(error.status === 409 ? (error.error?.message || 'This workflow transition is not allowed.') : 'Task status could not be changed.');
       }
     });
   }
@@ -409,6 +429,7 @@ export class TaskFlowFacade implements OnInit {
     this.editTaskDueDate.set(task.dueDate ? task.dueDate.slice(0, 10) : '');
     this.taskEditError.set('');
     this.showEditTask.set(true);
+    this.loadEditCustomFields(task.type, task);
   }
 
   saveTaskEdit() {
@@ -417,6 +438,7 @@ export class TaskFlowFacade implements OnInit {
       this.taskEditError.set('Task title and project are required.');
       return;
     }
+    if (this.hasMissingRequiredFields(this.editCustomFields(), this.editCustomFieldValues())) { this.taskEditError.set('Complete all required additional fields.'); return; }
     this.savingTaskEdit.set(true);
     this.taskEditError.set('');
     this.taskApi.updateTask(task.id, {
@@ -428,6 +450,7 @@ export class TaskFlowFacade implements OnInit {
       projectId: this.editTaskProjectId(),
       softwareApplicationId: null,
       dueDate: this.editTaskDueDate() || null
+      ,customFields: this.serializeCustomFields(this.editCustomFields(), this.editCustomFieldValues())
     }).subscribe({
       next: updated => {
         this.savingTaskEdit.set(false);
@@ -478,6 +501,55 @@ export class TaskFlowFacade implements OnInit {
     });
   }
 
+  addTaskLink() {
+    const task = this.selectedTask(); const reference = this.linkTaskReference().trim();
+    if (!task || !reference) { this.linkError.set('Enter a task number such as TF-2026...'); return; }
+    this.savingLink.set(true); this.linkError.set('');
+    this.taskApi.addTaskLink(task.id, this.linkType(), reference).subscribe({ next: link => { this.savingLink.set(false); this.linkTaskReference.set(''); this.selectedTask.update(current => current ? { ...current, links: [...current.links, link] } : current); }, error: (error: HttpErrorResponse) => { this.savingLink.set(false); this.linkError.set(error.error?.message || 'Task link could not be added.'); } });
+  }
+
+  removeTaskLink(linkId: string) {
+    const task = this.selectedTask(); if (!task) return; this.linkError.set('');
+    this.taskApi.removeTaskLink(task.id, linkId).subscribe({ next: () => this.selectedTask.update(current => current ? { ...current, links: current.links.filter(link => link.id !== linkId) } : current), error: () => this.linkError.set('Task link could not be removed.') });
+  }
+
+  taskLinkLabel(type: string, outgoing: boolean) {
+    if (type === 'Blocks') return outgoing ? 'blocks' : 'is blocked by';
+    if (type === 'ParentOf') return outgoing ? 'parent of' : 'child of';
+    if (type === 'Duplicates') return outgoing ? 'duplicates' : 'is duplicated by';
+    return 'relates to';
+  }
+
+  uploadAttachment(files: FileList | null) {
+    const task = this.selectedTask(); const file = files?.item(0);
+    if (!task || !file) return;
+    this.uploadingAttachment.set(true); this.attachmentError.set('');
+    this.taskApi.uploadTaskAttachment(task.id, file).subscribe({
+      next: attachment => { this.uploadingAttachment.set(false); this.selectedTask.update(current => current ? { ...current, attachments: [attachment, ...current.attachments] } : current); },
+      error: (error: HttpErrorResponse) => { this.uploadingAttachment.set(false); this.attachmentError.set(error.error?.message || 'The attachment could not be uploaded.'); }
+    });
+  }
+
+  downloadAttachment(attachmentId: string, fileName: string) {
+    const task = this.selectedTask(); if (!task) return;
+    this.attachmentError.set('');
+    this.taskApi.downloadTaskAttachment(task.id, attachmentId).subscribe({
+      next: blob => { const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = fileName; anchor.click(); URL.revokeObjectURL(url); },
+      error: () => this.attachmentError.set('The attachment could not be downloaded.')
+    });
+  }
+
+  deleteAttachment(attachmentId: string) {
+    const task = this.selectedTask(); if (!task) return;
+    this.attachmentError.set('');
+    this.taskApi.deleteTaskAttachment(task.id, attachmentId).subscribe({
+      next: () => this.selectedTask.update(current => current ? { ...current, attachments: current.attachments.filter(item => item.id !== attachmentId) } : current),
+      error: () => this.attachmentError.set('The attachment could not be removed.')
+    });
+  }
+
+  formatFileSize(size: number) { return size < 1024 ? `${size} B` : size < 1024 * 1024 ? `${(size / 1024).toFixed(1)} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`; }
+
   openCreate() {
     this.createError.set('');
     if (!this.auth.accessToken()) {
@@ -485,6 +557,7 @@ export class TaskFlowFacade implements OnInit {
       return;
     }
     this.showCreate.set(true);
+    this.loadCreateCustomFields(this.taskType());
   }
 
   openLogin() {
@@ -543,6 +616,7 @@ export class TaskFlowFacade implements OnInit {
       this.createError.set('A title and project are required.');
       return;
     }
+    if (this.hasMissingRequiredFields(this.createCustomFields(), this.createCustomFieldValues())) { this.createError.set('Complete all required additional fields.'); return; }
     this.creatingTask.set(true);
     this.createError.set('');
     this.taskApi.createTask({
@@ -554,6 +628,7 @@ export class TaskFlowFacade implements OnInit {
       projectId: this.taskProjectId(),
       softwareApplicationId: null,
       dueDate: this.taskDueDate() || null
+      ,customFields: this.serializeCustomFields(this.createCustomFields(), this.createCustomFieldValues())
     }).subscribe({
       next: () => {
         this.creatingTask.set(false);
@@ -578,6 +653,31 @@ export class TaskFlowFacade implements OnInit {
       }
     });
   }
+
+  changeCreateTaskType(type: string) { this.taskType.set(type); this.loadCreateCustomFields(type); }
+  changeEditTaskType(type: string) { this.editTaskType.set(type); this.loadEditCustomFields(type); }
+  setCreateCustomField(id: string, value: string | string[]) { this.createCustomFieldValues.update(values => ({ ...values, [id]: value })); }
+  setEditCustomField(id: string, value: string | string[]) { this.editCustomFieldValues.update(values => ({ ...values, [id]: value })); }
+  customFieldValue(values: Record<string, string | string[]>, id: string) { const value = values[id]; return Array.isArray(value) ? '' : value ?? ''; }
+  customFieldSelected(values: Record<string, string | string[]>, id: string, option: string) { const value = values[id]; return Array.isArray(value) && value.includes(option); }
+  toggleCustomFieldOption(target: 'create' | 'edit', id: string, option: string, checked: boolean) {
+    const source = target === 'create' ? this.createCustomFieldValues : this.editCustomFieldValues;
+    const current = source()[id]; const selected = Array.isArray(current) ? current : [];
+    source.update(values => ({ ...values, [id]: checked ? [...selected, option] : selected.filter(x => x !== option) }));
+  }
+
+  private loadCreateCustomFields(type: string) {
+    this.taskApi.getApplicableCustomFields(type).subscribe({ next: fields => { const visible = fields.filter(field => field.showOnCreate); this.createCustomFields.set(visible); this.createCustomFieldValues.set(this.defaultCustomFieldValues(visible)); }, error: () => { this.createCustomFields.set([]); this.createError.set('Custom fields could not be loaded.'); } });
+  }
+
+  private loadEditCustomFields(type: string, task: ApiTaskDetails | null = null) {
+    this.taskApi.getApplicableCustomFields(type).subscribe({ next: fields => { const visible = fields.filter(field => field.showOnEdit); this.editCustomFields.set(visible); const values = this.defaultCustomFieldValues(visible); for (const item of task?.customFields ?? []) if (visible.some(field => field.id === item.customFieldDefinitionId)) values[item.customFieldDefinitionId] = item.type === 'MultiSelect' ? item.displayValues.length ? this.parseMultiSelect(item.value) : [] : item.value ?? ''; this.editCustomFieldValues.set(values); }, error: () => { this.editCustomFields.set([]); this.taskEditError.set('Custom fields could not be loaded.'); } });
+  }
+
+  private defaultCustomFieldValues(fields: ApplicableCustomField[]) { return Object.fromEntries(fields.map(field => [field.id, field.type === 'MultiSelect' ? this.parseMultiSelect(field.defaultValue) : field.defaultValue ?? ''])) as Record<string, string | string[]>; }
+  private parseMultiSelect(value?: string | null): string[] { try { return value ? JSON.parse(value) : []; } catch { return []; } }
+  private serializeCustomFields(fields: ApplicableCustomField[], values: Record<string, string | string[]>): SaveTaskCustomFieldValue[] { return fields.map(field => { const value = values[field.id]; return { customFieldDefinitionId: field.id, value: Array.isArray(value) ? JSON.stringify(value) : value?.trim() || null }; }); }
+  private hasMissingRequiredFields(fields: ApplicableCustomField[], values: Record<string, string | string[]>) { return fields.some(field => field.isRequired && (!values[field.id] || (Array.isArray(values[field.id]) && !values[field.id].length))); }
 
   login() {
     const isRegistering = this.registering();

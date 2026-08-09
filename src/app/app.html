@@ -36,7 +36,7 @@
     <div class="brand"><span class="brand-mark">TF</span><span>TaskFlow</span></div>
     <div class="workspace-label">WORKSPACE</div>
     <nav>
-      @for (item of ['Dashboard', 'My Work', 'Projects', 'Software', 'Teams', 'Departments', 'Vendors', 'Reports', 'Audit Log', 'Create Account']; track item) {
+      @for (item of ['Dashboard', 'My Work', 'Board', 'Backlog', 'Releases', 'Projects', 'Software', 'Teams', 'Departments', 'Vendors', 'Work Item Types', 'Custom Fields', 'Workflows', 'Reports', 'Audit Log', 'Create Account']; track item) {
         <button class="nav-item" [class.selected]="activeNav() === item" (click)="setNav(item)">
           <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Departments' ? '▦' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : item === 'Create Account' ? '+' : '◌' }}</span>{{ item }}
         </button>
@@ -66,10 +66,20 @@
       <label>Project<select [value]="taskProjectId()" (change)="taskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
       @if (!projects().length) {<p class="form-message error">No active projects are available.</p>}
       <div class="modal-grid">
-        <label>Type<select [value]="taskType()" (change)="taskType.set($any($event.target).value)"><option value="Bug">Bug</option><option value="Requirement">Requirement</option><option value="ChangeRequest">Change request</option><option value="Enhancement">Enhancement</option><option value="Incident">Incident</option></select></label>
+        <label>Type<select [value]="taskType()" (change)="changeCreateTaskType($any($event.target).value)">@for (type of workItemTypes(); track type.key) { <option [value]="type.key">{{ type.name }}</option> }</select></label>
         <label>Priority<select [value]="taskPriority()" (change)="taskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label>
       </div>
       <label>Due date<input type="date" [value]="taskDueDate()" (input)="taskDueDate.set($any($event.target).value)" /></label>
+      @if (createCustomFields().length) { <section class="dynamic-fields"><h3>Additional information</h3>@for (field of createCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
+        @switch (field.type) {
+          @case ('LongText') { <textarea rows="3" [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)"></textarea> }
+          @case ('Number') { <input type="number" [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)" /> }
+          @case ('Date') { <input type="date" [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)" /> }
+          @case ('Boolean') { <select [value]="customFieldValue(createCustomFieldValues(), field.id)" (change)="setCreateCustomField(field.id, $any($event.target).value)"><option value="">Not set</option><option value="true">Yes</option><option value="false">No</option></select> }
+          @case ('Select') { <select [value]="customFieldValue(createCustomFieldValues(), field.id)" (change)="setCreateCustomField(field.id, $any($event.target).value)"><option value="">Select...</option>@for (option of field.options; track option.id) { <option [value]="option.value">{{ option.label }}</option> }</select> }
+          @case ('MultiSelect') { <div class="option-checks">@for (option of field.options; track option.id) { <label class="option-check"><input type="checkbox" [checked]="customFieldSelected(createCustomFieldValues(), field.id, option.value)" (change)="toggleCustomFieldOption('create', field.id, option.value, $any($event.target).checked)" />{{ option.label }}</label> }</div> }
+          @default { <input [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)" /> }
+        } @if (field.description) { <small>{{ field.description }}</small> }</label></div> }</section> }
       @if (createError()) {<p class="form-message error">{{ createError() }}</p>}
       <div class="modal-actions"><button class="secondary" (click)="showCreate.set(false)">Cancel</button><button class="primary" [disabled]="creatingTask() || !projects().length" (click)="createTask()">{{ creatingTask() ? 'Creating...' : 'Create task' }}</button></div>
     </div>
@@ -83,8 +93,18 @@
       <label>Task title<input [value]="editTaskTitle()" (input)="editTaskTitle.set($any($event.target).value)" /></label>
       <label>Description<textarea rows="4" [value]="editTaskDescription()" (input)="editTaskDescription.set($any($event.target).value)"></textarea></label>
       <label>Project<select [value]="editTaskProjectId()" (change)="editTaskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
-      <div class="modal-grid"><label>Type<select [value]="editTaskType()" (change)="editTaskType.set($any($event.target).value)"><option value="Bug">Bug</option><option value="Requirement">Requirement</option><option value="ChangeRequest">Change request</option><option value="Enhancement">Enhancement</option><option value="Incident">Incident</option><option value="MeetingAction">Meeting action</option><option value="Testing">Testing</option><option value="Deployment">Deployment</option><option value="Maintenance">Maintenance</option></select></label><label>Priority<select [value]="editTaskPriority()" (change)="editTaskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label></div>
+      <div class="modal-grid"><label>Type<select [value]="editTaskType()" (change)="changeEditTaskType($any($event.target).value)">@for (type of workItemTypes(); track type.key) { <option [value]="type.key">{{ type.name }}</option> }</select></label><label>Priority<select [value]="editTaskPriority()" (change)="editTaskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label></div>
       <label>Due date<input type="date" [value]="editTaskDueDate()" (input)="editTaskDueDate.set($any($event.target).value)" /></label>
+      @if (editCustomFields().length) { <section class="dynamic-fields"><h3>Additional information</h3>@for (field of editCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
+        @switch (field.type) {
+          @case ('LongText') { <textarea rows="3" [value]="customFieldValue(editCustomFieldValues(), field.id)" (input)="setEditCustomField(field.id, $any($event.target).value)"></textarea> }
+          @case ('Number') { <input type="number" [value]="customFieldValue(editCustomFieldValues(), field.id)" (input)="setEditCustomField(field.id, $any($event.target).value)" /> }
+          @case ('Date') { <input type="date" [value]="customFieldValue(editCustomFieldValues(), field.id)" (input)="setEditCustomField(field.id, $any($event.target).value)" /> }
+          @case ('Boolean') { <select [value]="customFieldValue(editCustomFieldValues(), field.id)" (change)="setEditCustomField(field.id, $any($event.target).value)"><option value="">Not set</option><option value="true">Yes</option><option value="false">No</option></select> }
+          @case ('Select') { <select [value]="customFieldValue(editCustomFieldValues(), field.id)" (change)="setEditCustomField(field.id, $any($event.target).value)"><option value="">Select...</option>@for (option of field.options; track option.id) { <option [value]="option.value">{{ option.label }}</option> }</select> }
+          @case ('MultiSelect') { <div class="option-checks">@for (option of field.options; track option.id) { <label class="option-check"><input type="checkbox" [checked]="customFieldSelected(editCustomFieldValues(), field.id, option.value)" (change)="toggleCustomFieldOption('edit', field.id, option.value, $any($event.target).checked)" />{{ option.label }}</label> }</div> }
+          @default { <input [value]="customFieldValue(editCustomFieldValues(), field.id)" (input)="setEditCustomField(field.id, $any($event.target).value)" /> }
+        } @if (field.description) { <small>{{ field.description }}</small> }</label></div> }</section> }
       @if (taskEditError()) {<p class="form-message error">{{ taskEditError() }}</p>}
       <div class="modal-actions"><button type="button" class="secondary" (click)="showEditTask.set(false)">Cancel</button><button type="button" class="primary" [disabled]="savingTaskEdit()" (click)="saveTaskEdit()">{{ savingTaskEdit() ? 'Saving...' : 'Save changes' }}</button></div>
     </div>
