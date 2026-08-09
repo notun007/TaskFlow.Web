@@ -3,39 +3,42 @@ info: Microsoft.Hosting.Lifetime[14]
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
-      Hosting environment: Production
+      Hosting environment: Development
 info: Microsoft.Hosting.Lifetime[0]
       Content root path: F:\SEBL\Projects\GitHub\TaskFlow.Api\TaskFlow.Api
 warn: Microsoft.EntityFrameworkCore.Model.Validation[10622]
       Entity 'TaskItem' has a global query filter defined and is the required end of a relationship with the entity 'TaskAssignment'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (123ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
+      Executed DbCommand (130ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (130ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (130ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."SoftwareApplications" "s"
+          WHERE ((NOT ("s"."IsDeleted" <> 0 )) AND ("s"."VendorId" = "v"."Id")))
+      FROM "TASKFLOW"."Vendors" "v"
+      WHERE NOT ("v"."IsDeleted" <> 0 )
+      ORDER BY "v"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (122ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
       SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
       FROM "TASKFLOW"."AspNetUsers" "a"
       WHERE "a"."NormalizedEmail" = :p_normalizedEmail
       FETCH FIRST 2 ROWS ONLY
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      Executed DbCommand (130ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "p"."Id", "p"."Name"
       FROM "TASKFLOW"."Projects" "p"
       WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."Status" = N'Active'))
       ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (31ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
-      SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
-      FROM "TASKFLOW"."AspNetUsers" "a"
-      WHERE "a"."NormalizedEmail" = :p_normalizedEmail
-      FETCH FIRST 2 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (28ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
       SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
@@ -49,7 +52,7 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
       ORDER BY "t0"."DueDate"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (40ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      Executed DbCommand (24ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
       SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
       FROM (
           SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
@@ -61,7 +64,7 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
       ORDER BY "t0"."DueDate"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (4ms) [Parameters=[:p_userId='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
+      Executed DbCommand (5ms) [Parameters=[:p_userId='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
       SELECT "a0"."Name"
       FROM "TASKFLOW"."AspNetUserRoles" "a"
       INNER JOIN "TASKFLOW"."AspNetRoles" "a0" ON "a"."RoleId" = "a0"."Id"
@@ -84,11 +87,50 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
       ORDER BY "t0"."DueDate"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (25ms) [Parameters=[:p0='?' (DbType = Binary), :p1='?' (Size = 2000), :p2='?' (Size = 2000), :p3='?' (Size = 2000), :p4='?' (DbType = DateTime), :p5='?' (Size = 450), :p6='?' (Size = 450), :p7='?' (Size = 2000), :p8='?' (DbType = Byte), :p9='?' (DbType = DateTime), :p10='?' (DbType = Binary), :p11='?' (Size = 2000), :p12='?' (DbType = DateTime), :p13='?' (DbType = Byte), :p14='?' (Size = 2000), :p15='?' (Size = 2000), :p16='?' (Size = 2000), :p17='?' (Size = 2000), :p18='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='0']
+      DECLARE
+      
+      
+      BEGIN
+      
+      INSERT INTO "TASKFLOW"."AuditEntries" ("Id", "Action", "ActorReference", "ChangesJson", "CreatedAt", "EntityId", "EntityName", "IpAddress", "IsDeleted", "UpdatedAt")
+      VALUES (:p0, :p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9);
+      INSERT INTO "TASKFLOW"."Vendors" ("Id", "ContractReference", "CreatedAt", "IsDeleted", "Name", "SlaDetails", "SupportEmail", "SupportPhone", "UpdatedAt")
+      VALUES (:p10, :p11, :p12, :p13, :p14, :p15, :p16, :p17, :p18);
+      
+      END;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
+      SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."SoftwareApplications" "s"
+          WHERE ((NOT ("s"."IsDeleted" <> 0 )) AND ("s"."VendorId" = "v"."Id")))
+      FROM "TASKFLOW"."Vendors" "v"
+      WHERE "v"."Id" = :p_id
+      FETCH FIRST 2 ROWS ONLY
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[:p_p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "a"."Id", "a"."EntityName", "a"."EntityId", "a"."Action", "a"."ActorReference", "a"."CreatedAt"
+      FROM "TASKFLOW"."AuditEntries" "a"
+      ORDER BY "a"."CreatedAt" DESC
+      FETCH FIRST :p_p ROWS ONLY
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
@@ -99,8 +141,48 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       WHERE NOT ("p"."IsDeleted" <> 0 )
       ORDER BY "p"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "s"."Id", "s"."Name"
+      FROM "TASKFLOW"."SoftwareApplications" "s"
+      WHERE NOT ("s"."IsDeleted" <> 0 )
+      ORDER BY "s"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."SoftwareApplications" "s"
+          WHERE ((NOT ("s"."IsDeleted" <> 0 )) AND ("s"."VendorId" = "v"."Id")))
+      FROM "TASKFLOW"."Vendors" "v"
+      WHERE NOT ("v"."IsDeleted" <> 0 )
+      ORDER BY "v"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
+      SELECT "d"."Id", "d"."Name", "d"."Description", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."Teams" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."DepartmentId" = "d"."Id")))
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "d"."Id", "d"."Name"
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "t"."Id", "t"."Name", "t"."DepartmentId", "d"."Name", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."TaskAssignments" "t0"
+          WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
+      FROM "TASKFLOW"."Teams" "t"
+      INNER JOIN "TASKFLOW"."Departments" "d" ON "t"."DepartmentId" = "d"."Id"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+      ORDER BY "t"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."SupportTeam", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "s"."VendorId", "v"."Name", (
           SELECT COUNT(*)
           FROM "TASKFLOW"."Projects" "p"
           WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
@@ -113,7 +195,231 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       ORDER BY "s"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "t"."Id", "t"."Name", "d"."Name", (
+      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
+      FROM "TASKFLOW"."Projects" "p"
+      WHERE NOT ("p"."IsDeleted" <> 0 )
+      ORDER BY "p"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (14ms) [Parameters=[:p_status_Value='?' (Size = 2000)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_priority_Value='?' (Size = 2000)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."Priority" = :p_priority_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_priority_Value='?' (Size = 2000), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."Priority" = :p_priority_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_priority_Value='?' (Size = 2000)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."Priority" = :p_priority_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_priority_Value='?' (Size = 2000), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."Priority" = :p_priority_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_status_Value='?' (Size = 2000), :p_projectId_Value='?' (DbType = Binary), :p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."Status" = :p_status_Value))) AND ("t"."ProjectId" = :p_projectId_Value))
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
+      WHERE NOT ("t"."IsDeleted" <> 0 )
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
+      FROM "TASKFLOW"."Projects" "p"
+      WHERE NOT ("p"."IsDeleted" <> 0 )
+      ORDER BY "p"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."SupportTeam", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "s"."VendorId", "v"."Name", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."Projects" "p"
+          WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND (((((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."SoftwareApplicationId" = "s"."Id"))) AND ("t"."Status" <> N'Closed'))) AND ("t"."Status" <> N'Cancelled')))))
+      FROM "TASKFLOW"."SoftwareApplications" "s"
+      LEFT JOIN "TASKFLOW"."Vendors" "v" ON "s"."VendorId" = "v"."Id"
+      WHERE NOT ("s"."IsDeleted" <> 0 )
+      ORDER BY "s"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "d"."Id", "d"."Name"
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "t"."Id", "t"."Name", "t"."DepartmentId", "d"."Name", (
           SELECT COUNT(*)
           FROM "TASKFLOW"."TaskAssignments" "t0"
           WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
@@ -122,7 +428,16 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       WHERE NOT ("t"."IsDeleted" <> 0 )
       ORDER BY "t"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "d"."Id", "d"."Name", "d"."Description", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."Teams" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."DepartmentId" = "d"."Id")))
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
           SELECT COUNT(*)
           FROM "TASKFLOW"."SoftwareApplications" "s"
@@ -130,12 +445,6 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       FROM "TASKFLOW"."Vendors" "v"
       WHERE NOT ("v"."IsDeleted" <> 0 )
       ORDER BY "v"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT COUNT(*)
@@ -169,22 +478,11 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       ORDER BY "a"."CreatedAt" DESC
       FETCH FIRST :p_p ROWS ONLY
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "a"."Id", "a"."EntityName", "a"."EntityId", "a"."Action", "a"."ActorReference", "a"."CreatedAt"
+      FROM "TASKFLOW"."AuditEntries" "a"
+      ORDER BY "a"."CreatedAt" DESC
+      FETCH FIRST :p_p ROWS ONLY
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT COUNT(*)
@@ -202,93 +500,6 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       ) "t0"
       INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
       ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-warn: Microsoft.EntityFrameworkCore.Query[20504]
-      Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (25ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."ActualResult", "s"."CreatedAt", "s"."Description", "s"."DueDate", "s"."Environment", "s"."ExpectedResult", "s"."Impact", "s"."IsDeleted", "s"."Priority", "s"."ProjectId", "s"."ReproductionSteps", "s"."Resolution", "s"."RootCause", "s"."Severity", "s"."SlaDueDate", "s"."SoftwareApplicationId", "s"."Source", "s"."SourceReference", "s"."Status", "s"."TaskNumber", "s"."Title", "s"."Type", "s"."UpdatedAt", "s"."Workaround", "s"."Id0", "s"."CreatedAt0", "s"."IsDeleted0", "s"."Name", "s"."Objectives", "s"."ProjectKey", "s"."ProjectManager", "s"."SoftwareApplicationId0", "s"."Sponsor", "s"."StartDate", "s"."Status0", "s"."TargetDate", "s"."UpdatedAt0", "t0"."Id", "t0"."CreatedAt", "t0"."DisplayName", "t0"."IsDeleted", "t0"."PartyReference", "t0"."Responsibility", "t0"."TaskItemId", "t0"."UpdatedAt", "t2"."Id", "t2"."AuthorReference", "t2"."Body", "t2"."CreatedAt", "t2"."IsDeleted", "t2"."TaskItemId", "t2"."UpdatedAt"
-      FROM (
-          SELECT "t"."Id", "t"."ActualResult", "t"."CreatedAt", "t"."Description", "t"."DueDate", "t"."Environment", "t"."ExpectedResult", "t"."Impact", "t"."IsDeleted", "t"."Priority", "t"."ProjectId", "t"."ReproductionSteps", "t"."Resolution", "t"."RootCause", "t"."Severity", "t"."SlaDueDate", "t"."SoftwareApplicationId", "t"."Source", "t"."SourceReference", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type", "t"."UpdatedAt", "t"."Workaround", "p"."Id" "Id0", "p"."CreatedAt" "CreatedAt0", "p"."IsDeleted" "IsDeleted0", "p"."Name", "p"."Objectives", "p"."ProjectKey", "p"."ProjectManager", "p"."SoftwareApplicationId" "SoftwareApplicationId0", "p"."Sponsor", "p"."StartDate", "p"."Status" "Status0", "p"."TargetDate", "p"."UpdatedAt" "UpdatedAt0"
-          FROM "TASKFLOW"."TASKS" "t"
-          INNER JOIN "TASKFLOW"."Projects" "p" ON "t"."ProjectId" = "p"."Id"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ((("t"."Id" = :p_id) AND (NOT ("t"."IsDeleted" <> 0 )))))
-          FETCH FIRST 1 ROWS ONLY
-      ) "s"
-      LEFT JOIN "TASKFLOW"."TaskAssignments" "t0" ON "s"."Id" = "t0"."TaskItemId"
-      LEFT JOIN (
-          SELECT "t1"."Id", "t1"."AuthorReference", "t1"."Body", "t1"."CreatedAt", "t1"."IsDeleted", "t1"."TaskItemId", "t1"."UpdatedAt"
-          FROM "TASKFLOW"."TaskComments" "t1"
-          WHERE NOT ("t1"."IsDeleted" <> 0 )
-      ) "t2" ON "s"."Id" = "t2"."TaskItemId"
-      ORDER BY "s"."Id", "s"."Id0", "t0"."Id"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (3ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."ActualResult", "s"."CreatedAt", "s"."Description", "s"."DueDate", "s"."Environment", "s"."ExpectedResult", "s"."Impact", "s"."IsDeleted", "s"."Priority", "s"."ProjectId", "s"."ReproductionSteps", "s"."Resolution", "s"."RootCause", "s"."Severity", "s"."SlaDueDate", "s"."SoftwareApplicationId", "s"."Source", "s"."SourceReference", "s"."Status", "s"."TaskNumber", "s"."Title", "s"."Type", "s"."UpdatedAt", "s"."Workaround", "s"."Id0", "s"."CreatedAt0", "s"."IsDeleted0", "s"."Name", "s"."Objectives", "s"."ProjectKey", "s"."ProjectManager", "s"."SoftwareApplicationId0", "s"."Sponsor", "s"."StartDate", "s"."Status0", "s"."TargetDate", "s"."UpdatedAt0", "t0"."Id", "t0"."CreatedAt", "t0"."DisplayName", "t0"."IsDeleted", "t0"."PartyReference", "t0"."Responsibility", "t0"."TaskItemId", "t0"."UpdatedAt", "t2"."Id", "t2"."AuthorReference", "t2"."Body", "t2"."CreatedAt", "t2"."IsDeleted", "t2"."TaskItemId", "t2"."UpdatedAt"
-      FROM (
-          SELECT "t"."Id", "t"."ActualResult", "t"."CreatedAt", "t"."Description", "t"."DueDate", "t"."Environment", "t"."ExpectedResult", "t"."Impact", "t"."IsDeleted", "t"."Priority", "t"."ProjectId", "t"."ReproductionSteps", "t"."Resolution", "t"."RootCause", "t"."Severity", "t"."SlaDueDate", "t"."SoftwareApplicationId", "t"."Source", "t"."SourceReference", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type", "t"."UpdatedAt", "t"."Workaround", "p"."Id" "Id0", "p"."CreatedAt" "CreatedAt0", "p"."IsDeleted" "IsDeleted0", "p"."Name", "p"."Objectives", "p"."ProjectKey", "p"."ProjectManager", "p"."SoftwareApplicationId" "SoftwareApplicationId0", "p"."Sponsor", "p"."StartDate", "p"."Status" "Status0", "p"."TargetDate", "p"."UpdatedAt" "UpdatedAt0"
-          FROM "TASKFLOW"."TASKS" "t"
-          INNER JOIN "TASKFLOW"."Projects" "p" ON "t"."ProjectId" = "p"."Id"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ((("t"."Id" = :p_id) AND (NOT ("t"."IsDeleted" <> 0 )))))
-          FETCH FIRST 1 ROWS ONLY
-      ) "s"
-      LEFT JOIN "TASKFLOW"."TaskAssignments" "t0" ON "s"."Id" = "t0"."TaskItemId"
-      LEFT JOIN (
-          SELECT "t1"."Id", "t1"."AuthorReference", "t1"."Body", "t1"."CreatedAt", "t1"."IsDeleted", "t1"."TaskItemId", "t1"."UpdatedAt"
-          FROM "TASKFLOW"."TaskComments" "t1"
-          WHERE NOT ("t1"."IsDeleted" <> 0 )
-      ) "t2" ON "s"."Id" = "t2"."TaskItemId"
-      ORDER BY "s"."Id", "s"."Id0", "t0"."Id"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
@@ -298,121 +509,6 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       FROM "TASKFLOW"."Projects" "p"
       WHERE NOT ("p"."IsDeleted" <> 0 )
       ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."Projects" "p"
-          WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND (((((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."SoftwareApplicationId" = "s"."Id"))) AND ("t"."Status" <> N'Closed'))) AND ("t"."Status" <> N'Cancelled')))))
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      LEFT JOIN "TASKFLOW"."Vendors" "v" ON "s"."VendorId" = "v"."Id"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
-      FROM "TASKFLOW"."Projects" "p"
-      WHERE NOT ("p"."IsDeleted" <> 0 )
-      ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."Projects" "p"
-          WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND (((((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."SoftwareApplicationId" = "s"."Id"))) AND ("t"."Status" <> N'Closed'))) AND ("t"."Status" <> N'Cancelled')))))
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      LEFT JOIN "TASKFLOW"."Vendors" "v" ON "s"."VendorId" = "v"."Id"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
-      FROM "TASKFLOW"."Projects" "p"
-      WHERE NOT ("p"."IsDeleted" <> 0 )
-      ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (10ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Objectives", "p"."Status", "p"."StartDate", "p"."TargetDate", "p"."ProjectManager", "p"."Sponsor", "p"."SoftwareApplicationId", "s"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 )))), "p"."CreatedAt", "p"."UpdatedAt"
-      FROM "TASKFLOW"."Projects" "p"
-      LEFT JOIN "TASKFLOW"."SoftwareApplications" "s" ON "p"."SoftwareApplicationId" = "s"."Id"
-      WHERE (("p"."Id" = :p_id) AND (NOT ("p"."IsDeleted" <> 0 )))
-      FETCH FIRST 1 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Objectives", "p"."Status", "p"."StartDate", "p"."TargetDate", "p"."ProjectManager", "p"."Sponsor", "p"."SoftwareApplicationId", "s"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 )))), "p"."CreatedAt", "p"."UpdatedAt"
-      FROM "TASKFLOW"."Projects" "p"
-      LEFT JOIN "TASKFLOW"."SoftwareApplications" "s" ON "p"."SoftwareApplicationId" = "s"."Id"
-      WHERE (("p"."Id" = :p_id) AND (NOT ("p"."IsDeleted" <> 0 )))
-      FETCH FIRST 1 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_id='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Objectives", "p"."Status", "p"."StartDate", "p"."TargetDate", "p"."ProjectManager", "p"."Sponsor", "p"."SoftwareApplicationId", "s"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 )))), "p"."CreatedAt", "p"."UpdatedAt"
-      FROM "TASKFLOW"."Projects" "p"
-      LEFT JOIN "TASKFLOW"."SoftwareApplications" "s" ON "p"."SoftwareApplicationId" = "s"."Id"
-      WHERE (("p"."Id" = :p_id) AND (NOT ("p"."IsDeleted" <> 0 )))
-      FETCH FIRST 1 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."Projects" "p"
-          WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND (((((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."SoftwareApplicationId" = "s"."Id"))) AND ("t"."Status" <> N'Closed'))) AND ("t"."Status" <> N'Cancelled')))))
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      LEFT JOIN "TASKFLOW"."Vendors" "v" ON "s"."VendorId" = "v"."Id"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "t"."Id", "t"."Name", "d"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TaskAssignments" "t0"
-          WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
-      FROM "TASKFLOW"."Teams" "t"
-      INNER JOIN "TASKFLOW"."Departments" "d" ON "t"."DepartmentId" = "d"."Id"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-      ORDER BY "t"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
@@ -423,106 +519,33 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       WHERE NOT ("v"."IsDeleted" <> 0 )
       ORDER BY "v"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
+      SELECT "d"."Id", "d"."Name", "d"."Description", (
           SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
-      FROM "TASKFLOW"."Projects" "p"
-      WHERE NOT ("p"."IsDeleted" <> 0 )
-      ORDER BY "p"."Name"
+          FROM "TASKFLOW"."Teams" "t"
+          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."DepartmentId" = "d"."Id")))
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
+      SELECT "t"."Id", "t"."Name", "t"."DepartmentId", "d"."Name", (
+          SELECT COUNT(*)
+          FROM "TASKFLOW"."TaskAssignments" "t0"
+          WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
+      FROM "TASKFLOW"."Teams" "t"
+      INNER JOIN "TASKFLOW"."Departments" "d" ON "t"."DepartmentId" = "d"."Id"
       WHERE NOT ("t"."IsDeleted" <> 0 )
+      ORDER BY "t"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
+      SELECT "d"."Id", "d"."Name"
+      FROM "TASKFLOW"."Departments" "d"
+      WHERE NOT ("d"."IsDeleted" <> 0 )
+      ORDER BY "d"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((((NOT ("t"."IsDeleted" <> 0 )) AND ("p"."Id" = "t"."ProjectId"))) AND (NOT ("t"."IsDeleted" <> 0 ))))
-      FROM "TASKFLOW"."Projects" "p"
-      WHERE NOT ("p"."IsDeleted" <> 0 )
-      ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
+      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."SupportTeam", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "s"."VendorId", "v"."Name", (
           SELECT COUNT(*)
           FROM "TASKFLOW"."Projects" "p"
           WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
@@ -534,125 +557,7 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       WHERE NOT ("s"."IsDeleted" <> 0 )
       ORDER BY "s"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "t"."Id", "t"."Name", "d"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TaskAssignments" "t0"
-          WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
-      FROM "TASKFLOW"."Teams" "t"
-      INNER JOIN "TASKFLOW"."Departments" "d" ON "t"."DepartmentId" = "d"."Id"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-      ORDER BY "t"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "v"."Id", "v"."Name", "v"."SupportEmail", "v"."SupportPhone", "v"."ContractReference", "v"."SlaDetails", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."SoftwareApplications" "s"
-          WHERE ((NOT ("s"."IsDeleted" <> 0 )) AND ("s"."VendorId" = "v"."Id")))
-      FROM "TASKFLOW"."Vendors" "v"
-      WHERE NOT ("v"."IsDeleted" <> 0 )
-      ORDER BY "v"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
-      SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
-      FROM "TASKFLOW"."AspNetUsers" "a"
-      WHERE "a"."NormalizedEmail" = :p_normalizedEmail
-      FETCH FIRST 2 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
-      SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
-      FROM "TASKFLOW"."AspNetUsers" "a"
-      WHERE "a"."NormalizedEmail" = :p_normalizedEmail
-      FETCH FIRST 2 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
-      SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
-      FROM "TASKFLOW"."AspNetUsers" "a"
-      WHERE "a"."NormalizedEmail" = :p_normalizedEmail
-      FETCH FIRST 2 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[:p_userId='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "a0"."Name"
-      FROM "TASKFLOW"."AspNetUserRoles" "a"
-      INNER JOIN "TASKFLOW"."AspNetRoles" "a0" ON "a"."RoleId" = "a0"."Id"
-      WHERE "a"."UserId" = :p_userId
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "p"."Id", "p"."Name"
-      FROM "TASKFLOW"."Projects" "p"
-      WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."Status" = N'Active'))
-      ORDER BY "p"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (3ms) [Parameters=[:p_normalizedEmail='?' (Size = 256)], CommandType='Text', CommandTimeout='0']
-      SELECT "a"."Id", "a"."AccessFailedCount", "a"."ConcurrencyStamp", "a"."Department", "a"."DisplayName", "a"."Email", "a"."EmailConfirmed", "a"."IsActive", "a"."JobTitle", "a"."LockoutEnabled", "a"."LockoutEnd", "a"."NormalizedEmail", "a"."NormalizedUserName", "a"."PasswordHash", "a"."PhoneNumber", "a"."PhoneNumberConfirmed", "a"."SecurityStamp", "a"."TwoFactorEnabled", "a"."UserName"
-      FROM "TASKFLOW"."AspNetUsers" "a"
-      WHERE "a"."NormalizedEmail" = :p_normalizedEmail
-      FETCH FIRST 2 ROWS ONLY
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[:p_userId='?' (DbType = Binary)], CommandType='Text', CommandTimeout='0']
-      SELECT "a0"."Name"
-      FROM "TASKFLOW"."AspNetUserRoles" "a"
-      INNER JOIN "TASKFLOW"."AspNetRoles" "a0" ON "a"."RoleId" = "a0"."Id"
-      WHERE "a"."UserId" = :p_userId
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT COUNT(*)
-      FROM "TASKFLOW"."TASKS" "t"
-      WHERE NOT ("t"."IsDeleted" <> 0 )
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
-      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
-      FROM (
-          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE NOT ("t"."IsDeleted" <> 0 )
-          ORDER BY "t"."DueDate"
-          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
-      ) "t0"
-      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
-      ORDER BY "t0"."DueDate"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name"
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
       SELECT "p"."Id", "p"."Name", "p"."ProjectKey", "p"."Status", "p"."TargetDate", "p"."ProjectManager", (
           SELECT COUNT(*)
           FROM "TASKFLOW"."TASKS" "t"
@@ -662,24 +567,18 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       ORDER BY "p"."Name"
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "s"."Id", "s"."Name", "s"."BusinessOwner", "s"."TechnicalOwner", "s"."Criticality", "s"."Technology", "s"."CurrentVersion", "s"."IsProduction", "s"."IsThirdParty", "v"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."Projects" "p"
-          WHERE ((NOT ("p"."IsDeleted" <> 0 )) AND ("p"."SoftwareApplicationId" = "s"."Id"))), (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TASKS" "t"
-          WHERE ((NOT ("t"."IsDeleted" <> 0 )) AND (((((((NOT ("t"."IsDeleted" <> 0 )) AND ("t"."SoftwareApplicationId" = "s"."Id"))) AND ("t"."Status" <> N'Closed'))) AND ("t"."Status" <> N'Cancelled')))))
-      FROM "TASKFLOW"."SoftwareApplications" "s"
-      LEFT JOIN "TASKFLOW"."Vendors" "v" ON "s"."VendorId" = "v"."Id"
-      WHERE NOT ("s"."IsDeleted" <> 0 )
-      ORDER BY "s"."Name"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='0']
-      SELECT "t"."Id", "t"."Name", "d"."Name", (
-          SELECT COUNT(*)
-          FROM "TASKFLOW"."TaskAssignments" "t0"
-          WHERE ((NOT ("t0"."IsDeleted" <> 0 )) AND ("t0"."PartyReference" = "t"."Name")))
-      FROM "TASKFLOW"."Teams" "t"
-      INNER JOIN "TASKFLOW"."Departments" "d" ON "t"."DepartmentId" = "d"."Id"
+      SELECT COUNT(*)
+      FROM "TASKFLOW"."TASKS" "t"
       WHERE NOT ("t"."IsDeleted" <> 0 )
-      ORDER BY "t"."Name"
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[:p_p='?' (DbType = Int32), :p_p0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='0']
+      SELECT "t0"."Id", "t0"."TaskNumber", "t0"."Title", "t0"."Type", "t0"."Status", "t0"."Priority", "t0"."DueDate", "p"."Name"
+      FROM (
+          SELECT "t"."Id", "t"."DueDate", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."TaskNumber", "t"."Title", "t"."Type"
+          FROM "TASKFLOW"."TASKS" "t"
+          WHERE NOT ("t"."IsDeleted" <> 0 )
+          ORDER BY "t"."DueDate"
+          OFFSET :p_p ROWS FETCH NEXT :p_p0 ROWS ONLY
+      ) "t0"
+      INNER JOIN "TASKFLOW"."Projects" "p" ON "t0"."ProjectId" = "p"."Id"
+      ORDER BY "t0"."DueDate"

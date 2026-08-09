@@ -1,0 +1,9 @@
+@let h = workspace;
+<section class="operations-screen">
+  <div class="operations-heading"><div><h1>Audit Log</h1><p>Trace authenticated changes across tasks, projects, and assignments.</p></div></div>
+  <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search audit events..." [value]="h.operationalSearch()" (input)="h.operationalSearch.set($any($event.target).value)" /></label><span>Latest {{ h.filteredAudit().length }} events</span></div>
+  @if (h.operationsError()) { <p class="form-message error">{{ h.operationsError() }}</p> }
+  <section class="operations-table"><div class="audit-head"><span>Time</span><span>Entity</span><span>Action</span><span>Actor</span></div>
+    @if (h.loadingOperations()) { <div class="empty">Loading audit events...</div> } @else { @for (item of h.filteredAudit(); track item.id) { <div class="audit-row"><span>{{ item.createdAt | date:'medium' }}</span><span><strong>{{ item.entityName }}</strong><small>{{ item.entityId }}</small></span><span><b class="audit-action">{{ h.formatEnum(item.action) }}</b></span><span>{{ item.actorReference }}</span></div> } @empty { <div class="empty">No audit events found.</div> } }
+  </section>
+</section>

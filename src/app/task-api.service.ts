@@ -19,9 +19,14 @@ export type ReferenceItem = { id: string; name: string };
 export type ProjectListItem = { id: string; name: string; projectKey?: string | null; status: string; targetDate?: string | null; projectManager?: string | null; taskCount: number };
 export type ProjectDetails = ProjectListItem & { objectives?: string | null; startDate?: string | null; sponsor?: string | null; softwareApplicationId?: string | null; softwareApplicationName?: string | null; createdAt: string; updatedAt?: string | null };
 export type UpdateProjectRequest = { name: string; projectKey: string | null; objectives: string | null; status: string; startDate: string | null; targetDate: string | null; projectManager: string | null; sponsor: string | null; softwareApplicationId: string | null };
-export type SoftwareListItem = { id: string; name: string; businessOwner?: string | null; technicalOwner?: string | null; criticality?: string | null; technology?: string | null; currentVersion?: string | null; isProduction: boolean; isThirdParty: boolean; vendorName?: string | null; linkedProjects: number; openTasks: number };
-export type TeamListItem = { id: string; name: string; department: string; assignedTasks: number };
+export type SoftwareListItem = { id: string; name: string; businessOwner?: string | null; technicalOwner?: string | null; supportTeam?: string | null; criticality?: string | null; technology?: string | null; currentVersion?: string | null; isProduction: boolean; isThirdParty: boolean; vendorId?: string | null; vendorName?: string | null; linkedProjects: number; openTasks: number };
+export type SaveSoftwareRequest = { name: string; businessOwner: string | null; technicalOwner: string | null; supportTeam: string | null; criticality: string | null; technology: string | null; currentVersion: string | null; isProduction: boolean; isThirdParty: boolean; vendorId: string | null };
+export type TeamListItem = { id: string; name: string; departmentId: string; department: string; assignedTasks: number };
+export type SaveTeamRequest = { name: string; departmentId: string };
+export type DepartmentListItem = { id: string; name: string; description?: string | null; teams: number };
+export type SaveDepartmentRequest = { name: string; description: string | null };
 export type VendorListItem = { id: string; name: string; supportEmail?: string | null; supportPhone?: string | null; contractReference?: string | null; slaDetails?: string | null; applications: number };
+export type SaveVendorRequest = { name: string; supportEmail: string | null; supportPhone: string | null; contractReference: string | null; slaDetails: string | null };
 export type AuditListItem = { id: string; entityName: string; entityId: string; action: string; actorReference: string; createdAt: string };
 export type ApiTaskAssignment = { id: string; responsibility: string; partyReference: string; displayName?: string | null };
 export type ApiTaskComment = { id: string; authorReference: string; body: string; createdAt: string };
@@ -88,16 +93,56 @@ export class TaskApiService {
     return this.http.get<ReferenceItem[]>(`${this.baseUrl}/reference-data/software-applications`);
   }
 
+  getDepartments(): Observable<ReferenceItem[]> {
+    return this.http.get<ReferenceItem[]>(`${this.baseUrl}/reference-data/departments`);
+  }
+
   getSoftwareList(): Observable<SoftwareListItem[]> {
     return this.http.get<SoftwareListItem[]>(`${this.baseUrl}/operations/software`);
+  }
+
+  createSoftware(request: SaveSoftwareRequest): Observable<SoftwareListItem> {
+    return this.http.post<SoftwareListItem>(`${this.baseUrl}/operations/software`, request);
+  }
+
+  updateSoftware(id: string, request: SaveSoftwareRequest): Observable<SoftwareListItem> {
+    return this.http.put<SoftwareListItem>(`${this.baseUrl}/operations/software/${id}`, request);
   }
 
   getTeams(): Observable<TeamListItem[]> {
     return this.http.get<TeamListItem[]>(`${this.baseUrl}/operations/teams`);
   }
 
+  getDepartmentList(): Observable<DepartmentListItem[]> {
+    return this.http.get<DepartmentListItem[]>(`${this.baseUrl}/operations/departments`);
+  }
+
+  createDepartment(request: SaveDepartmentRequest): Observable<DepartmentListItem> {
+    return this.http.post<DepartmentListItem>(`${this.baseUrl}/operations/departments`, request);
+  }
+
+  updateDepartment(id: string, request: SaveDepartmentRequest): Observable<DepartmentListItem> {
+    return this.http.put<DepartmentListItem>(`${this.baseUrl}/operations/departments/${id}`, request);
+  }
+
+  createTeam(request: SaveTeamRequest): Observable<TeamListItem> {
+    return this.http.post<TeamListItem>(`${this.baseUrl}/operations/teams`, request);
+  }
+
+  updateTeam(id: string, request: SaveTeamRequest): Observable<TeamListItem> {
+    return this.http.put<TeamListItem>(`${this.baseUrl}/operations/teams/${id}`, request);
+  }
+
   getVendors(): Observable<VendorListItem[]> {
     return this.http.get<VendorListItem[]>(`${this.baseUrl}/operations/vendors`);
+  }
+
+  createVendor(request: SaveVendorRequest): Observable<VendorListItem> {
+    return this.http.post<VendorListItem>(`${this.baseUrl}/operations/vendors`, request);
+  }
+
+  updateVendor(id: string, request: SaveVendorRequest): Observable<VendorListItem> {
+    return this.http.put<VendorListItem>(`${this.baseUrl}/operations/vendors/${id}`, request);
   }
 
   getAuditLog(take = 100): Observable<AuditListItem[]> {

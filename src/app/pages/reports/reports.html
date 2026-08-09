@@ -1,0 +1,6 @@
+@let h = workspace;
+<section class="operations-screen">
+  <div class="operations-heading"><div><h1>Reports</h1><p>A concise operational view of delivery health and workload.</p></div><button type="button" class="secondary" (click)="h.setNav('Dashboard')">Open dashboard</button></div>
+  <div class="report-summary"><div><span>Open tasks</span><strong>{{ h.dashboardSummary().open }}</strong></div><div><span>Due this week</span><strong>{{ h.dashboardSummary().dueThisWeek }}</strong></div><div><span>Overdue</span><strong>{{ h.dashboardSummary().overdue }}</strong></div><div><span>Projects</span><strong>{{ h.projectRecords().length }}</strong></div></div>
+  <section class="report-panel"><div class="activity-head"><div><h2>Task distribution</h2><p>Current workload grouped by workflow stage</p></div></div><div class="report-bars">@for (item of h.dashboardWorkload(); track item.label) { <div><span>{{ item.label }}</span><div class="report-track"><i [class]="item.tone" [style.width.%]="item.percent"></i></div><strong>{{ item.count }} · {{ item.percent }}%</strong></div> }</div></section>
+</section>

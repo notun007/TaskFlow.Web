@@ -1,0 +1,19 @@
+@let h = workspace;
+<section class="account-screen" aria-labelledby="create-account-title">
+  <div class="account-heading">
+    <p class="eyebrow">SECURE ACCESS</p>
+    <h1 id="create-account-title">Create your account</h1>
+    <p>Set up the first account, then create your initial project.</p>
+  </div>
+  <form class="account-form" (submit)="$event.preventDefault(); h.login()">
+    <label>Display name<input autocomplete="name" [value]="h.loginDisplayName()" (input)="h.loginDisplayName.set($any($event.target).value)" /></label>
+    <label>Email<input type="email" autocomplete="username" [value]="h.loginEmail()" (input)="h.loginEmail.set($any($event.target).value)" /></label>
+    <label>Password<input type="password" autocomplete="new-password" [value]="h.loginPassword()" (input)="h.loginPassword.set($any($event.target).value)" /></label>
+    <label>Confirm password<input type="password" autocomplete="new-password" [value]="h.loginConfirmPassword()" (input)="h.loginConfirmPassword.set($any($event.target).value)" /></label>
+    @if (h.loginError()) { <p class="form-message error">{{ h.loginError() }}</p> }
+    <div class="account-form-footer">
+      <button type="button" class="text-button" (click)="h.openLogin()">Already have an account? Sign in</button>
+      <div class="account-actions"><button type="button" class="secondary" (click)="h.setNav('Dashboard')">Cancel</button><button type="submit" class="primary" [disabled]="h.loggingIn()">{{ h.loggingIn() ? 'Please wait...' : 'Create account' }}</button></div>
+    </div>
+  </form>
+</section>

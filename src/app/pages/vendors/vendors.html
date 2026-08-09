@@ -1,0 +1,21 @@
+@let h = workspace;
+<section class="operations-screen">
+  <div class="operations-heading"><div><h1>Vendors</h1><p>Monitor external partners, support contacts, contracts, and SLAs.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New vendor</button></div>
+  <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search vendors..." [value]="h.operationalSearch()" (input)="h.operationalSearch.set($any($event.target).value)" /></label><span>{{ h.filteredVendors().length }} vendors</span></div>
+  @if (h.operationsError()) { <p class="form-message error">{{ h.operationsError() }}</p> }
+  <div class="operations-layout" [class.has-detail]="h.selectedVendor()"><section class="operations-table"><div class="vendor-head"><span>Vendor</span><span>Support contact</span><span>Contract</span><span>Applications</span></div>
+    @if (h.loadingOperations()) { <div class="empty">Loading vendors...</div> } @else { @for (item of h.filteredVendors(); track item.id) { <button type="button" class="vendor-row" [class.selected]="h.selectedVendor()?.id === item.id" (click)="h.selectedVendor.set(item)"><span><strong>{{ item.name }}</strong><small>{{ item.supportPhone || 'No phone recorded' }}</small></span><span>{{ item.supportEmail || 'Not set' }}</span><span>{{ item.contractReference || 'Not set' }}</span><span>{{ item.applications }}</span></button> } @empty { <div class="empty">No vendors found.</div> } }
+    </section>
+    @if (h.selectedVendor(); as item) { <aside class="operation-detail"><button type="button" class="detail-close" aria-label="Close details" (click)="h.selectedVendor.set(null)">×</button><h2>{{ item.name }}</h2><p>{{ item.slaDetails || 'No SLA details have been recorded.' }}</p><dl><div><dt>Support email</dt><dd>{{ item.supportEmail || 'Not set' }}</dd></div><div><dt>Support phone</dt><dd>{{ item.supportPhone || 'Not set' }}</dd></div><div><dt>Contract reference</dt><dd>{{ item.contractReference || 'Not set' }}</dd></div><div><dt>Linked applications</dt><dd>{{ item.applications }}</dd></div></dl><div class="project-detail-actions"><button type="button" class="primary" (click)="openEdit(item)">Edit vendor</button></div></aside> }
+  </div>
+</section>
+@if (showEditor()) {
+  <div class="modal-backdrop"><div class="modal vendor-editor" role="dialog" aria-modal="true" aria-labelledby="vendor-editor-title"><div class="modal-head"><div><p class="eyebrow">VENDOR MANAGEMENT</p><h2 id="vendor-editor-title">{{ editingId() ? 'Edit vendor' : 'Create vendor' }}</h2></div><button type="button" aria-label="Close" (click)="closeEditor()">×</button></div>
+    <label>Vendor name<input [value]="name()" (input)="name.set($any($event.target).value)" /></label>
+    <div class="modal-grid"><label>Support email<input type="email" [value]="supportEmail()" (input)="supportEmail.set($any($event.target).value)" /></label><label>Support phone<input [value]="supportPhone()" (input)="supportPhone.set($any($event.target).value)" /></label></div>
+    <label>Contract reference<input [value]="contractReference()" (input)="contractReference.set($any($event.target).value)" /></label>
+    <label>SLA details<textarea rows="4" [value]="slaDetails()" (input)="slaDetails.set($any($event.target).value)"></textarea></label>
+    @if (saveError()) { <p class="form-message error">{{ saveError() }}</p> }
+    <div class="modal-actions"><button type="button" class="secondary" (click)="closeEditor()">Cancel</button><button type="button" class="primary" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving...' : editingId() ? 'Save changes' : 'Create vendor' }}</button></div>
+  </div></div>
+}
