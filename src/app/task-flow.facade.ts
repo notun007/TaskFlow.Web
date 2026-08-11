@@ -73,6 +73,7 @@ export class TaskFlowFacade implements OnInit {
   readonly newComment = signal('');
   readonly postingComment = signal(false);
   readonly commentError = signal('');
+  readonly commentSuccess = signal('');
   readonly showEditTask = signal(false);
   readonly editTaskTitle = signal('');
   readonly editTaskDescription = signal('');
@@ -87,6 +88,7 @@ export class TaskFlowFacade implements OnInit {
   readonly assignmentResponsibility = signal('Assignee');
   readonly assignmentPartyReference = signal('');
   readonly assignmentDisplayName = signal('');
+  readonly showAssignmentModal = signal(false);
   readonly savingAssignment = signal(false);
   readonly assignmentError = signal('');
   readonly linkType = signal('Blocks');
@@ -95,6 +97,10 @@ export class TaskFlowFacade implements OnInit {
   readonly linkError = signal('');
   readonly uploadingAttachment = signal(false);
   readonly attachmentError = signal('');
+  readonly previewingAttachmentId = signal<string | null>(null);
+  readonly attachmentPreviewId = signal<string | null>(null);
+  readonly attachmentPreviewUrl = signal<string | null>(null);
+  readonly attachmentPreviewName = signal('');
   readonly projectRecords = signal<ProjectListItem[]>([]);
   readonly selectedProject = signal<ProjectDetails | null>(null);
   readonly projectSearch = signal('');
@@ -181,7 +187,7 @@ export class TaskFlowFacade implements OnInit {
     this.router.events.subscribe(event => {
       if (!(event instanceof NavigationEnd)) return;
       const path = event.urlAfterRedirects.split('?')[0].replace(/^\//, '');
-      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
+      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
       this.activeNav.set(section);
       this.loadSection(section);
     });
@@ -374,6 +380,18 @@ export class TaskFlowFacade implements OnInit {
     this.taskDetailsError.set('');
     this.newComment.set('');
     this.commentError.set('');
+    this.showAssignmentModal.set(false);
+  }
+
+  openAssignmentModal() {
+    this.assignmentError.set('');
+    this.showAssignmentModal.set(true);
+  }
+
+  closeAssignmentModal() {
+    if (this.savingAssignment()) return;
+    this.assignmentError.set('');
+    this.showAssignmentModal.set(false);
   }
 
   changeTaskStatus(status: string) {
@@ -405,17 +423,34 @@ export class TaskFlowFacade implements OnInit {
     }
     this.postingComment.set(true);
     this.commentError.set('');
+    this.commentSuccess.set('');
     this.taskApi.addTaskComment(task.id, body).subscribe({
       next: comment => {
-        this.postingComment.set(false);
         this.newComment.set('');
-        this.selectedTask.update(current => current ? { ...current, comments: [...current.comments, comment] } : current);
+        const currentTask = this.selectedTask();
+        if (currentTask?.id === task.id) currentTask.comments.push(comment);
+        this.postingComment.set(false);
+        this.showCommentSuccess();
       },
       error: () => {
         this.postingComment.set(false);
         this.commentError.set('The comment could not be posted.');
       }
     });
+  }
+
+  private commentSuccessTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private showCommentSuccess() {
+    if (this.commentSuccessTimer) clearTimeout(this.commentSuccessTimer);
+    this.commentSuccess.set('Comment saved successfully.');
+    this.commentSuccessTimer = setTimeout(() => this.dismissCommentSuccess(), 3500);
+  }
+
+  dismissCommentSuccess() {
+    if (this.commentSuccessTimer) clearTimeout(this.commentSuccessTimer);
+    this.commentSuccessTimer = null;
+    this.commentSuccess.set('');
   }
 
   openTaskEditor() {
@@ -480,6 +515,7 @@ export class TaskFlowFacade implements OnInit {
         this.savingAssignment.set(false);
         this.assignmentPartyReference.set('');
         this.assignmentDisplayName.set('');
+        this.showAssignmentModal.set(false);
         this.selectedTask.update(current => current && !current.assignments.some(item => item.id === assignment.id)
           ? { ...current, assignments: [...current.assignments, assignment] }
           : current);
@@ -537,6 +573,33 @@ export class TaskFlowFacade implements OnInit {
       next: blob => { const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = fileName; anchor.click(); URL.revokeObjectURL(url); },
       error: () => this.attachmentError.set('The attachment could not be downloaded.')
     });
+  }
+
+  isImageAttachment(contentType: string, fileName: string) {
+    return contentType.toLowerCase().startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fileName);
+  }
+
+  viewAttachment(attachmentId: string, fileName: string) {
+    const task = this.selectedTask(); if (!task) return;
+    this.closeAttachmentPreview();
+    this.previewingAttachmentId.set(attachmentId); this.attachmentError.set('');
+    this.taskApi.downloadTaskAttachment(task.id, attachmentId).subscribe({
+      next: blob => {
+        this.previewingAttachmentId.set(null);
+        this.attachmentPreviewId.set(attachmentId);
+        this.attachmentPreviewName.set(fileName);
+        this.attachmentPreviewUrl.set(URL.createObjectURL(blob));
+      },
+      error: () => { this.previewingAttachmentId.set(null); this.attachmentError.set('The image preview could not be loaded.'); }
+    });
+  }
+
+  closeAttachmentPreview() {
+    const url = this.attachmentPreviewUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.attachmentPreviewId.set(null);
+    this.attachmentPreviewUrl.set(null);
+    this.attachmentPreviewName.set('');
   }
 
   deleteAttachment(attachmentId: string) {

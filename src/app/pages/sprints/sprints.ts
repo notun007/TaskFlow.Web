@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, signal, ViewEncapsulation } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BacklogDetails, ReferenceItem, SaveSprintRequest, SprintItem, SprintTaskItem, TaskApiService, WorkItemTypeReference } from '../../task-api.service';
 
-@Component({ selector: 'app-backlog-page', standalone: true, imports: [], templateUrl: './backlog.html', styleUrl: './backlog.scss', encapsulation: ViewEncapsulation.None })
-export class BacklogPage implements OnInit {
+@Component({ selector: 'app-sprints-page', standalone: true, imports: [DatePipe], templateUrl: './sprints.html', styleUrl: './sprints.scss', encapsulation: ViewEncapsulation.None })
+export class SprintsPage implements OnInit {
   private readonly api = inject(TaskApiService);
   readonly projects = signal<ReferenceItem[]>([]); readonly projectId = signal(''); readonly data = signal<BacklogDetails | null>(null); readonly loading = signal(false); readonly saving = signal(false); readonly error = signal(''); readonly message = signal('');
   readonly showEditor = signal(false); readonly editingId = signal<string | null>(null); readonly sprintProjectId = signal(''); readonly sprintName = signal(''); readonly sprintGoal = signal(''); readonly sprintStart = signal(''); readonly sprintEnd = signal(''); readonly draggedTask = signal<SprintTaskItem | null>(null); readonly dropTarget = signal('');

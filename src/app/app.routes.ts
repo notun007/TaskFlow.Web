@@ -5,6 +5,7 @@ export const routes: Routes = [
   { path: 'my-work', loadComponent: () => import('./pages/my-work/my-work').then(m => m.MyWorkPage) },
   { path: 'board', loadComponent: () => import('./pages/board/board').then(m => m.BoardPage) },
   { path: 'backlog', loadComponent: () => import('./pages/backlog/backlog').then(m => m.BacklogPage) },
+  { path: 'sprints', loadComponent: () => import('./pages/sprints/sprints').then(m => m.SprintsPage) },
   { path: 'releases', loadComponent: () => import('./pages/releases/releases').then(m => m.ReleasesPage) },
   { path: 'projects', loadComponent: () => import('./pages/projects/projects').then(m => m.ProjectsPage) },
   { path: 'software', loadComponent: () => import('./pages/software/software').then(m => m.SoftwarePage) },

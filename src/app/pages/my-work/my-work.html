@@ -57,50 +57,30 @@
           <h3>Description</h3>
           <p>{{ task.description || 'No description has been provided for this task.' }}</p>
         </section>
-        <section class="detail-panel workflow-history">
-          <h3>Workflow history</h3>
-          <div class="transition-list">
-            @for (entry of task.statusHistory; track entry.id) {
-              <article class="transition-item">
-                <span class="transition-marker"></span>
-                <div>
-                  <div class="comment-head">
-                    <strong
-                      >{{ h.formatEnum(entry.fromStatus) }} →
-                      {{ h.formatEnum(entry.toStatus) }}</strong
-                    ><time>{{ entry.createdAt | date: 'medium' }}</time>
-                  </div>
-                  <p>{{ entry.actorReference }}</p>
-                  @if (entry.comment) {
-                    <blockquote>{{ entry.comment }}</blockquote>
-                  }
-                </div>
-              </article>
-            } @empty {
-              <p class="detail-empty">No workflow transitions have been recorded yet.</p>
-            }
+        <section class="detail-panel attachment-section supporting-content-panel">
+          <div class="detail-section-heading"><h3>Attachments</h3><label class="secondary attachment-upload">{{ h.uploadingAttachment() ? 'Uploading...' : 'Add file' }}<input type="file" [disabled]="h.uploadingAttachment()" accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.csv,.docx,.xlsx" (change)="h.uploadAttachment($any($event.target).files); $any($event.target).value = ''" /></label></div>
+          @if (h.attachmentError()) { <p class="form-message error">{{ h.attachmentError() }}</p> }
+          <div class="attachment-list">
+            @for (attachment of task.attachments; track attachment.id) {
+              <div class="attachment-item"><div><strong>{{ attachment.fileName }}</strong><small>{{ h.formatFileSize(attachment.size) }} · {{ attachment.uploadedBy }} · {{ attachment.createdAt | date: 'medium' }}</small></div><div>@if (h.isImageAttachment(attachment.contentType, attachment.fileName)) { <button type="button" class="text-action" [disabled]="h.previewingAttachmentId() === attachment.id" (click)="h.viewAttachment(attachment.id, attachment.fileName)">{{ h.previewingAttachmentId() === attachment.id ? 'Loading...' : 'View' }}</button> }<button type="button" class="text-action" (click)="h.downloadAttachment(attachment.id, attachment.fileName)">Download</button><button type="button" aria-label="Remove attachment" (click)="h.deleteAttachment(attachment.id)">×</button></div></div>
+            } @empty { <p class="detail-empty">No attachments yet.</p> }
           </div>
+        </section>
+        <section class="detail-panel task-links-section supporting-content-panel">
+          <h3>Linked work</h3>
+          <div class="task-link-list">
+            @for (link of task.links; track link.id) {
+              <div class="task-link-item">
+                <div><small>{{ h.taskLinkLabel(link.type, link.isOutgoing) }}</small><strong>{{ link.otherTaskNumber }}</strong><span>{{ link.otherTaskTitle }}</span></div>
+                <span class="status">{{ h.formatEnum(link.otherTaskStatus) }}</span>
+                <button type="button" aria-label="Remove task link" (click)="h.removeTaskLink(link.id)">×</button>
+              </div>
+            } @empty { <p class="detail-empty">No linked tasks yet.</p> }
+          </div>
+          <div class="task-link-form"><label>Relationship<select [value]="h.linkType()" (change)="h.linkType.set($any($event.target).value)"><option value="Blocks">Blocks</option><option value="RelatesTo">Relates to</option><option value="Duplicates">Duplicates</option><option value="ParentOf">Parent of</option></select></label><label>Target task number<input placeholder="TF-..." [value]="h.linkTaskReference()" (input)="h.linkTaskReference.set($any($event.target).value)" /></label>@if (h.linkError()) { <p class="form-message error">{{ h.linkError() }}</p> }<button type="button" class="secondary" [disabled]="h.savingLink()" (click)="h.addTaskLink()">{{ h.savingLink() ? 'Linking...' : 'Add link' }}</button></div>
         </section>
         <section class="detail-panel comments-panel">
           <h3>Activity &amp; comments</h3>
-          <div class="comment-list">
-            @for (comment of task.comments; track comment.id) {
-              <article class="comment-item">
-                <span class="mini-avatar">{{
-                  h.initials(comment.authorReference).slice(0, 2)
-                }}</span>
-                <div>
-                  <div class="comment-head">
-                    <strong>{{ comment.authorReference }}</strong
-                    ><time>{{ comment.createdAt | date: 'medium' }}</time>
-                  </div>
-                  <p>{{ comment.body }}</p>
-                </div>
-              </article>
-            } @empty {
-              <p class="detail-empty">No comments yet.</p>
-            }
-          </div>
           <label class="comment-composer"
             >Add a comment<textarea
               rows="4"
@@ -121,6 +101,14 @@
             >
               {{ h.postingComment() ? 'Posting...' : 'Post comment' }}
             </button>
+          </div>
+          <div class="comment-list">
+            @for (comment of task.comments; track comment.id) {
+              <article class="comment-item">
+                <span class="mini-avatar">{{ h.initials(comment.authorReference).slice(0, 2) }}</span>
+                <div><div class="comment-head"><strong>{{ comment.authorReference }}</strong><time>{{ comment.createdAt | date: 'medium' }}</time></div><p>{{ comment.body }}</p></div>
+              </article>
+            } @empty { <p class="detail-empty">No comments yet.</p> }
           </div>
         </section>
       </div>
@@ -158,30 +146,26 @@
             <dd>{{ task.updatedAt ? (task.updatedAt | date: 'medium') : 'Not updated' }}</dd>
           </div>
         </dl>
-        <section class="attachment-section">
-          <div class="detail-section-heading"><h3>Attachments</h3><label class="secondary attachment-upload">{{ h.uploadingAttachment() ? 'Uploading...' : 'Add file' }}<input type="file" [disabled]="h.uploadingAttachment()" accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.csv,.docx,.xlsx" (change)="h.uploadAttachment($any($event.target).files); $any($event.target).value = ''" /></label></div>
-          @if (h.attachmentError()) { <p class="form-message error">{{ h.attachmentError() }}</p> }
-          <div class="attachment-list">
-            @for (attachment of task.attachments; track attachment.id) {
-              <div class="attachment-item"><div><strong>{{ attachment.fileName }}</strong><small>{{ h.formatFileSize(attachment.size) }} · {{ attachment.uploadedBy }} · {{ attachment.createdAt | date: 'medium' }}</small></div><div><button type="button" class="text-action" (click)="h.downloadAttachment(attachment.id, attachment.fileName)">Download</button><button type="button" aria-label="Remove attachment" (click)="h.deleteAttachment(attachment.id)">×</button></div></div>
-            } @empty { <p class="detail-empty">No attachments yet.</p> }
+        <section class="sidebar-workflow-history">
+          <h3>Workflow history</h3>
+          <div class="transition-list">
+            @for (entry of task.statusHistory; track entry.id) {
+              <article class="transition-item">
+                <span class="transition-marker"></span>
+                <div>
+                  <div class="comment-head">
+                    <strong>{{ h.formatEnum(entry.fromStatus) }} → {{ h.formatEnum(entry.toStatus) }}</strong>
+                    <time>{{ entry.createdAt | date: 'medium' }}</time>
+                  </div>
+                  <p>{{ entry.actorReference }}</p>
+                  @if (entry.comment) { <blockquote>{{ entry.comment }}</blockquote> }
+                </div>
+              </article>
+            } @empty { <p class="detail-empty">No workflow transitions have been recorded yet.</p> }
           </div>
-        </section>
-        <section class="task-links-section">
-          <h3>Linked work</h3>
-          <div class="task-link-list">
-            @for (link of task.links; track link.id) {
-              <div class="task-link-item">
-                <div><small>{{ h.taskLinkLabel(link.type, link.isOutgoing) }}</small><strong>{{ link.otherTaskNumber }}</strong><span>{{ link.otherTaskTitle }}</span></div>
-                <span class="status">{{ h.formatEnum(link.otherTaskStatus) }}</span>
-                <button type="button" aria-label="Remove task link" (click)="h.removeTaskLink(link.id)">×</button>
-              </div>
-            } @empty { <p class="detail-empty">No linked tasks yet.</p> }
-          </div>
-          <div class="task-link-form"><label>Relationship<select [value]="h.linkType()" (change)="h.linkType.set($any($event.target).value)"><option value="Blocks">Blocks</option><option value="RelatesTo">Relates to</option><option value="Duplicates">Duplicates</option><option value="ParentOf">Parent of</option></select></label><label>Target task number<input placeholder="TF-..." [value]="h.linkTaskReference()" (input)="h.linkTaskReference.set($any($event.target).value)" /></label>@if (h.linkError()) { <p class="form-message error">{{ h.linkError() }}</p> }<button type="button" class="secondary" [disabled]="h.savingLink()" (click)="h.addTaskLink()">{{ h.savingLink() ? 'Linking...' : 'Add link' }}</button></div>
         </section>
         <section class="assignment-section">
-          <h3>Assignments</h3>
+          <div class="assignment-heading"><h3>Assignments</h3><button type="button" class="secondary" (click)="h.openAssignmentModal()">Add assignment</button></div>
           <div class="assignment-list">
             @for (assignment of task.assignments; track assignment.id) {
               <div class="assignment-item">
@@ -203,41 +187,6 @@
             } @empty {
               <p class="detail-empty">No assignments yet.</p>
             }
-          </div>
-          <div class="assignment-form">
-            <label
-              >Responsibility<select
-                [value]="h.assignmentResponsibility()"
-                (change)="h.assignmentResponsibility.set($any($event.target).value)"
-              >
-                <option value="Owner">Owner</option>
-                <option value="Assignee">Assignee</option>
-                <option value="SupportingTeam">Supporting team</option>
-                <option value="Vendor">Vendor</option>
-                <option value="Approver">Approver</option>
-              </select></label
-            ><label
-              >Display name<input
-                [value]="h.assignmentDisplayName()"
-                (input)="h.assignmentDisplayName.set($any($event.target).value)"
-                placeholder="Name" /></label
-            ><label
-              >Reference<input
-                [value]="h.assignmentPartyReference()"
-                (input)="h.assignmentPartyReference.set($any($event.target).value)"
-                placeholder="Email, user ID, team, or vendor"
-            /></label>
-            @if (h.assignmentError()) {
-              <p class="form-message error">{{ h.assignmentError() }}</p>
-            }
-            <button
-              type="button"
-              class="secondary assignment-add"
-              [disabled]="h.savingAssignment()"
-              (click)="h.addAssignment()"
-            >
-              {{ h.savingAssignment() ? 'Adding...' : 'Add assignment' }}
-            </button>
           </div>
         </section>
       </aside>
@@ -367,4 +316,34 @@
       </div>
     </div>
   </section>
+}
+@if (h.showAssignmentModal()) {
+  <div class="modal-backdrop assignment-modal-backdrop" role="presentation" (click)="h.closeAssignmentModal()">
+    <section class="modal assignment-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-modal-title" (click)="$event.stopPropagation()">
+      <div class="modal-head"><div><p class="eyebrow">TASK ASSIGNMENT</p><h2 id="assignment-modal-title">Add assignment</h2></div><button type="button" aria-label="Close assignment dialog" [disabled]="h.savingAssignment()" (click)="h.closeAssignmentModal()">&times;</button></div>
+      <div class="assignment-modal-form">
+        <label>Responsibility<select [value]="h.assignmentResponsibility()" (change)="h.assignmentResponsibility.set($any($event.target).value)"><option value="Owner">Owner</option><option value="Assignee">Assignee</option><option value="SupportingTeam">Supporting team</option><option value="Vendor">Vendor</option><option value="Approver">Approver</option></select></label>
+        <label>Display name<input [value]="h.assignmentDisplayName()" (input)="h.assignmentDisplayName.set($any($event.target).value)" placeholder="Name" /></label>
+        <label>Reference<input [value]="h.assignmentPartyReference()" (input)="h.assignmentPartyReference.set($any($event.target).value)" placeholder="Email, user ID, team, or vendor" /></label>
+        @if (h.assignmentError()) { <p class="form-message error">{{ h.assignmentError() }}</p> }
+      </div>
+      <div class="modal-actions"><button type="button" class="secondary" [disabled]="h.savingAssignment()" (click)="h.closeAssignmentModal()">Cancel</button><button type="button" class="primary" [disabled]="h.savingAssignment()" (click)="h.addAssignment()">{{ h.savingAssignment() ? 'Adding...' : 'Add assignment' }}</button></div>
+    </section>
+  </div>
+}
+@if (h.attachmentPreviewUrl(); as previewUrl) {
+  <div class="modal-backdrop attachment-preview-backdrop" role="presentation" (click)="h.closeAttachmentPreview()">
+    <section class="attachment-preview-modal" role="dialog" aria-modal="true" aria-labelledby="attachment-preview-title" (click)="$event.stopPropagation()">
+      <header><div><p class="eyebrow">IMAGE ATTACHMENT</p><h2 id="attachment-preview-title">{{ h.attachmentPreviewName() }}</h2></div><button type="button" aria-label="Close image preview" (click)="h.closeAttachmentPreview()">×</button></header>
+      <div class="attachment-preview-canvas"><img [src]="previewUrl" [alt]="h.attachmentPreviewName()" /></div>
+      <footer><button type="button" class="secondary" (click)="h.closeAttachmentPreview()">Close</button><button type="button" class="primary" (click)="h.downloadAttachment(h.attachmentPreviewId()!, h.attachmentPreviewName())">Download</button></footer>
+    </section>
+  </div>
+}
+@if (h.commentSuccess()) {
+  <div class="comment-success-toast" role="status" aria-live="polite">
+    <span class="comment-success-toast__icon" aria-hidden="true">&#10003;</span>
+    <span>{{ h.commentSuccess() }}</span>
+    <button type="button" aria-label="Dismiss notification" (click)="h.dismissCommentSuccess()">&times;</button>
+  </div>
 }
