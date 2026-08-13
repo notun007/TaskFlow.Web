@@ -188,7 +188,7 @@ export class TaskFlowFacade implements OnInit {
     this.router.events.subscribe(event => {
       if (!(event instanceof NavigationEnd)) return;
       const path = event.urlAfterRedirects.split('?')[0].replace(/^\//, '');
-      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
+      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', 'transition-permissions': 'Transition Permissions', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
       this.activeNav.set(section);
       this.loadSection(section);
     });

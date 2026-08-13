@@ -214,13 +214,17 @@ export class BoardPage implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.moving.set(false);
           this.error.set(
-            error.status === 409
+            error.status === 403
+              ? `Your project role cannot move this task to ${this.label(status)}. Required role: ${(error.error?.requiredRoles ?? [])
+                  .map((value: string) => this.label(value).replace('Reviewer Tester', 'Reviewer / Tester'))
+                  .join(' or ') || 'not configured'}.`
+              : error.status === 409
               ? error.error?.message === 'This workflow transition is not allowed.'
                 ? `Move not allowed from ${this.label(task.status)}. Valid next statuses: ${(error.error?.allowedTransitions ?? [])
                     .map((value: string) => this.label(value))
                     .join(', ') || 'none'}.`
                 : error.error?.message || 'Task movement is not allowed for this sprint.'
-              : 'Task could not be moved.',
+              : error.error?.message || 'Task could not be moved.',
           );
         },
       });

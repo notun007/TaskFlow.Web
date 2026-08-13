@@ -34,6 +34,7 @@ export type UpdateCustomFieldRequest = { name: string; description: string | nul
 export type WorkflowTransitionItem = { id: string; fromStatus: string; toStatus: string; sortOrder: number };
 export type WorkflowDetails = { id: string; name: string; projectId?: string | null; project: string; isDefault: boolean; isInherited: boolean; statuses: string[]; transitions: WorkflowTransitionItem[] };
 export type SaveWorkflowRequest = { name: string; transitions: Array<{ fromStatus: string; toStatus: string; sortOrder: number }> };
+export type TransitionPermissionItem = { fromStatus: string; toStatus: string; roles: string[] };
 export type BoardColumnItem = { id: string; name: string; status: string; sortOrder: number; wipLimit?: number | null; isDefaultDestination: boolean };
 export type ProjectBoardDetails = { projectId: string; columns: BoardColumnItem[] };
 export type SaveProjectBoardRequest = { columns: Array<{ name: string; status: string; sortOrder: number; wipLimit: number | null; isDefaultDestination: boolean }> };
@@ -162,6 +163,9 @@ export class TaskApiService {
   reconcileProjectWorkflowTasks(projectId: string): Observable<{ reconciledCount: number; entryStatus: string }> {
     return this.http.post<{ reconciledCount: number; entryStatus: string }>(`${this.baseUrl}/configuration/workflows/${projectId}/reconcile-tasks`, {});
   }
+  getTransitionPermissions(): Observable<TransitionPermissionItem[]> { return this.http.get<TransitionPermissionItem[]>(`${this.baseUrl}/configuration/transition-permissions`); }
+  saveTransitionPermissions(transitions: TransitionPermissionItem[]): Observable<TransitionPermissionItem[]> { return this.http.put<TransitionPermissionItem[]>(`${this.baseUrl}/configuration/transition-permissions`, { transitions }); }
+  restoreTransitionPermissions(): Observable<TransitionPermissionItem[]> { return this.http.post<TransitionPermissionItem[]>(`${this.baseUrl}/configuration/transition-permissions/restore-defaults`, {}); }
 
   getProjectBoard(projectId: string): Observable<ProjectBoardDetails> { return this.http.get<ProjectBoardDetails>(`${this.baseUrl}/projects/${projectId}/board-settings`); }
   saveProjectBoard(projectId: string, request: SaveProjectBoardRequest): Observable<ProjectBoardDetails> { return this.http.put<ProjectBoardDetails>(`${this.baseUrl}/projects/${projectId}/board-settings`, request); }

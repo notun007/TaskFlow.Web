@@ -36,7 +36,7 @@
     <div class="brand"><span class="brand-mark">TF</span><span>TaskFlow</span></div>
     <div class="workspace-label">WORKSPACE</div>
     <nav>
-      @for (item of ['Dashboard', 'My Work', 'Board', 'Backlog', 'Sprints', 'Releases', 'Projects', 'Software', 'Teams', 'Departments', 'Vendors', 'Work Item Types', 'Custom Fields', 'Workflows', 'Reports', 'Audit Log', 'Create Account']; track item) {
+      @for (item of ['Dashboard', 'My Work', 'Board', 'Backlog', 'Sprints', 'Releases', 'Projects', 'Software', 'Teams', 'Departments', 'Vendors', 'Work Item Types', 'Custom Fields', 'Workflows', 'Transition Permissions', 'Reports', 'Audit Log', 'Create Account']; track item) {
         <button class="nav-item" [class.selected]="activeNav() === item" (click)="setNav(item)">
           <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Departments' ? '▦' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : item === 'Create Account' ? '+' : '◌' }}</span>{{ item }}
         </button>

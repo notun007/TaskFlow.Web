@@ -15,6 +15,7 @@ export const routes: Routes = [
   { path: 'work-item-types', loadComponent: () => import('./pages/work-item-types/work-item-types').then(m => m.WorkItemTypesPage) },
   { path: 'custom-fields', loadComponent: () => import('./pages/custom-fields/custom-fields').then(m => m.CustomFieldsPage) },
   { path: 'workflows', loadComponent: () => import('./pages/workflows/workflows').then(m => m.WorkflowsPage) },
+  { path: 'transition-permissions', loadComponent: () => import('./pages/transition-permissions/transition-permissions').then(m => m.TransitionPermissionsPage) },
   { path: 'reports', loadComponent: () => import('./pages/reports/reports').then(m => m.ReportsPage) },
   { path: 'audit-log', loadComponent: () => import('./pages/audit-log/audit-log').then(m => m.AuditLogPage) },
   { path: 'create-account', loadComponent: () => import('./pages/create-account/create-account').then(m => m.CreateAccountPage) },

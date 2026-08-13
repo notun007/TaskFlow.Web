@@ -1,0 +1,14 @@
+<section class="transition-permissions-screen" aria-labelledby="transition-permissions-title">
+  <div class="operations-heading"><div><h1 id="transition-permissions-title">Transition Permissions</h1><p>Control which project roles may perform each workflow transition across all projects.</p></div><div class="permission-heading-actions"><button type="button" class="secondary" [disabled]="loading() || saving()" (click)="restore()">Restore defaults</button><button type="button" class="primary" [disabled]="loading() || saving() || !dirty()" (click)="save()">{{ saving() ? 'Saving...' : 'Save policy' }}</button></div></div>
+  <div class="permission-notice"><strong>Global policy</strong><span>Changes apply immediately to every project Board. A user is allowed when any of their project roles matches a checked role.</span></div>
+  @if (error()) { <p class="form-message error">{{ error() }}</p> }
+  @if (message()) { <p class="form-message success">{{ message() }}</p> }
+  @if (loading()) { <div class="empty">Loading transition permissions...</div> } @else {
+    <div class="permission-table">
+      <div class="permission-table-head"><span>Transition</span>@for (role of roles; track role.value) { <span>{{ role.label }}</span> }</div>
+      @for (transition of transitions(); track transition.fromStatus + '-' + transition.toStatus; let i = $index) {
+        <div class="permission-row" [class.invalid]="!transition.roles.length"><div class="permission-transition"><strong>{{ label(transition.fromStatus) }}</strong><span>→</span><strong>{{ label(transition.toStatus) }}</strong></div>@for (role of roles; track role.value) { <label class="permission-check" [attr.title]="role.label"><input type="checkbox" [checked]="hasRole(transition, role.value)" [disabled]="saving()" (change)="toggleRole(i, role.value, $any($event.target).checked)" /><span>{{ role.label }}</span></label> }</div>
+      } @empty { <div class="empty">No workflow transitions are configured.</div> }
+    </div>
+  }
+</section>
