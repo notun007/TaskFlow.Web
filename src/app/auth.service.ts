@@ -1,6 +1,7 @@
 import { HttpClient, HttpInterceptorFn } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../environments/environment';
 
 type LoginResponse = { accessToken: string; expiresAt: string };
 type RegisterResponse = { id: string; email: string; displayName: string };
@@ -16,6 +17,7 @@ export type CurrentUser = {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
   private readonly http = inject(HttpClient);
   readonly accessToken = signal(this.readStoredToken());
   readonly currentUser = signal<CurrentUser | null>(null);
@@ -35,7 +37,7 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/auth/login', { email, password }).pipe(
+    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
       tap(response => {
         sessionStorage.setItem('taskflow.accessToken', response.accessToken);
         this.accessToken.set(response.accessToken);
@@ -44,25 +46,25 @@ export class AuthService {
   }
 
   register(email: string, password: string, displayName: string): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>('/api/auth/register', { email, password, displayName });
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, { email, password, displayName });
   }
 
   loadCurrentUser(): Observable<CurrentUser> {
-    return this.http.get<CurrentUser>('/api/auth/me').pipe(
+    return this.http.get<CurrentUser>(`${this.baseUrl}/me`).pipe(
       tap(user => this.currentUser.set(user))
     );
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<void> {
-    return this.http.post<void>('/api/auth/change-password', { currentPassword, newPassword });
+    return this.http.post<void>(`${this.baseUrl}/change-password`, { currentPassword, newPassword });
   }
 
   requestPasswordReset(email: string): Observable<ResetRequestResponse> {
-    return this.http.post<ResetRequestResponse>('/api/auth/request-password-reset', { email });
+    return this.http.post<ResetRequestResponse>(`${this.baseUrl}/request-password-reset`, { email });
   }
 
   resetPassword(email: string, token: string, newPassword: string): Observable<void> {
-    return this.http.post<void>('/api/auth/reset-password', { email, token, newPassword });
+    return this.http.post<void>(`${this.baseUrl}/reset-password`, { email, token, newPassword });
   }
 
   logout() {

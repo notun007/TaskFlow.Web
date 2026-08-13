@@ -1,15 +1,49 @@
 @let h = workspace;
 <section class="projects-screen" aria-labelledby="projects-title">
-  <div class="projects-heading"><div><h1 id="projects-title">Projects</h1><p>Plan delivery, ownership, dates, and linked software.</p></div><button type="button" class="primary" (click)="h.openNewProject()">＋ New project</button></div>
+  <div class="projects-heading"><div><h1 id="projects-title">Projects</h1><p>Plan delivery, ownership, workflow, and board layout.</p></div><button type="button" class="primary" (click)="h.openNewProject()">+ New project</button></div>
   @if (h.projectListError()) { <p class="form-message error">{{ h.projectListError() }}</p> }
   <div class="projects-layout" [class.has-detail]="h.selectedProject()">
     <section class="projects-panel">
-      <div class="project-toolbar"><div class="project-status-tabs"><button type="button" [class.active]="!h.projectStatusFilter()" (click)="h.projectStatusFilter.set('')">All</button><button type="button" [class.active]="h.projectStatusFilter() === 'Active'" (click)="h.projectStatusFilter.set('Active')">Active</button><button type="button" [class.active]="h.projectStatusFilter() === 'On hold'" (click)="h.projectStatusFilter.set('On hold')">On hold</button><button type="button" [class.active]="h.projectStatusFilter() === 'Completed'" (click)="h.projectStatusFilter.set('Completed')">Completed</button></div><label class="project-search"><span>⌕</span><input placeholder="Search projects..." [value]="h.projectSearch()" (input)="h.projectSearch.set($any($event.target).value)" /></label></div>
+      <div class="project-toolbar"><div class="project-status-tabs"><button type="button" [class.active]="!h.projectStatusFilter()" (click)="h.projectStatusFilter.set('')">All</button><button type="button" [class.active]="h.projectStatusFilter() === 'Active'" (click)="h.projectStatusFilter.set('Active')">Active</button><button type="button" [class.active]="h.projectStatusFilter() === 'On hold'" (click)="h.projectStatusFilter.set('On hold')">On hold</button><button type="button" [class.active]="h.projectStatusFilter() === 'Completed'" (click)="h.projectStatusFilter.set('Completed')">Completed</button></div><label class="project-search"><input placeholder="Search projects..." [value]="h.projectSearch()" (input)="h.projectSearch.set($any($event.target).value)" /></label></div>
       <div class="project-table-head"><span>Project</span><span>Status</span><span>Project manager</span><span>Target date</span><span>Tasks</span></div>
-      @if (h.loadingProjects()) { <div class="empty">Loading projects...</div> } @else { @for (project of h.filteredProjects(); track project.id) { <button type="button" class="project-row" [class.selected]="h.selectedProject()?.id === project.id" (click)="h.openProject(project.id)"><span><strong>{{ project.name }}</strong><small>{{ project.projectKey || 'No project key' }}</small></span><span><i class="project-status-dot"></i>{{ project.status }}</span><span>{{ project.projectManager || 'Unassigned' }}</span><span>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'No target date' }}</span><span>{{ project.taskCount }}</span></button> } @empty { <div class="empty">No projects match your search.</div> } }
+      @if (h.loadingProjects()) { <div class="empty">Loading projects...</div> } @else { @for (project of h.filteredProjects(); track project.id) { <button type="button" class="project-row" [class.selected]="h.selectedProject()?.id === project.id" (click)="h.openProject(project.id); detailTab.set('details')"><span><strong>{{ project.name }}</strong><small>{{ project.projectKey || 'No project key' }}</small></span><span><i class="project-status-dot"></i>{{ project.status }}</span><span>{{ project.projectManager || 'Unassigned' }}</span><span>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'No target date' }}</span><span>{{ project.taskCount }}</span></button> } @empty { <div class="empty">No projects match your search.</div> } }
     </section>
     @if (h.selectedProject(); as project) {
-      <aside class="project-detail-panel"><div class="project-detail-head"><div><h2>{{ project.name }}</h2><span class="project-status"><i></i>{{ project.status }}</span></div><button type="button" aria-label="Close project details" (click)="h.closeProject()">×</button></div><dl><div class="project-objectives"><dt>Objectives</dt><dd>{{ project.objectives || 'No objectives have been provided.' }}</dd></div><div><dt>Start date</dt><dd>{{ project.startDate ? (project.startDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Target date</dt><dd>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Project manager</dt><dd>{{ project.projectManager || 'Unassigned' }}</dd></div><div><dt>Sponsor</dt><dd>{{ project.sponsor || 'Unassigned' }}</dd></div><div><dt>Linked software</dt><dd>{{ project.softwareApplicationName || 'Not linked' }}</dd></div><div><dt>Task count</dt><dd>{{ project.taskCount }}</dd></div></dl><div class="project-detail-actions"><button type="button" class="primary" (click)="h.openProjectEditor()">Edit project</button><button type="button" class="danger-button" (click)="h.showArchiveProject.set(true)">Archive</button></div></aside>
+      <aside class="project-detail-panel">
+        <div class="project-detail-head"><div><h2>{{ project.name }}</h2><span class="project-status"><i></i>{{ project.status }}</span></div><button type="button" aria-label="Close project details" (click)="h.closeProject()">×</button></div>
+        <div class="project-detail-tabs"><button type="button" [class.active]="detailTab() === 'details'" (click)="detailTab.set('details')">Details</button><button type="button" [class.active]="detailTab() === 'board'" (click)="openBoardSettings(project.id)">Board settings</button><button type="button" [class.active]="detailTab() === 'access'" (click)="openAccess(project.id)">Access</button></div>
+        @if (detailTab() === 'details') {
+          <dl><div class="project-objectives"><dt>Objectives</dt><dd>{{ project.objectives || 'No objectives have been provided.' }}</dd></div><div><dt>Start date</dt><dd>{{ project.startDate ? (project.startDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Target date</dt><dd>{{ project.targetDate ? (project.targetDate | date:'mediumDate') : 'Not set' }}</dd></div><div><dt>Project manager</dt><dd>{{ project.projectManager || 'Unassigned' }}</dd></div><div><dt>Sponsor</dt><dd>{{ project.sponsor || 'Unassigned' }}</dd></div><div><dt>Linked software</dt><dd>{{ project.softwareApplicationName || 'Not linked' }}</dd></div><div><dt>Task count</dt><dd>{{ project.taskCount }}</dd></div></dl>
+          <div class="project-detail-actions"><button type="button" class="primary" (click)="h.openProjectEditor()">Edit project</button><button type="button" class="danger-button" (click)="h.showArchiveProject.set(true)">Archive</button></div>
+        } @else if (detailTab() === 'board') {
+          <div class="board-settings-editor"><p>Rename and reorder the project board columns. Each workflow status appears once.</p>
+          @if (boardError()) { <p class="form-message error">{{ boardError() }}</p> } @if (boardMessage()) { <p class="form-message success">{{ boardMessage() }}</p> }
+          @if (boardLoading()) { <div class="empty">Loading board settings...</div> } @else { @for (column of boardColumns(); track column.status; let i = $index) { <div class="board-setting-row"><div><strong>{{ column.status }}</strong><input [ngModel]="column.name" (ngModelChange)="updateColumn(i, 'name', $event)" /></div><label>WIP limit<input type="number" min="1" placeholder="None" [ngModel]="column.wipLimit" (ngModelChange)="updateColumn(i, 'wipLimit', $event)" /></label><div class="board-order-actions"><button type="button" [disabled]="i === 0" (click)="moveColumn(i, -1)">↑</button><button type="button" [disabled]="i === boardColumns().length - 1" (click)="moveColumn(i, 1)">↓</button></div></div> } }
+          <button type="button" class="primary" [disabled]="boardSaving() || boardLoading()" (click)="saveBoard(project.id)">{{ boardSaving() ? 'Saving...' : 'Save board settings' }}</button></div>
+        } @else {
+          <section class="project-access-editor">
+            <div class="access-intro"><h3>Project roles</h3><p>One user can hold several roles. Roles apply only to this project.</p></div>
+            @if (accessError()) { <p class="form-message error">{{ accessError() }}</p> }
+            @if (accessMessage()) { <p class="form-message success">{{ accessMessage() }}</p> }
+            @if (canManageAccess()) {
+              <div class="access-assignment-form">
+                <label>User<select [ngModel]="accessUserId()" (ngModelChange)="accessUserId.set($event)">@for (user of accessUsers(); track user.id) { <option [value]="user.id">{{ user.displayName }} — {{ user.email }}</option> }</select></label>
+                <label>Role<select [ngModel]="accessRole()" (ngModelChange)="accessRole.set($event)">@for (role of projectRoles; track role.value) { <option [value]="role.value">{{ role.label }}</option> }</select></label>
+                <button type="button" class="primary" [disabled]="accessSaving() || accessLoading() || !accessUserId()" (click)="addRole(project.id)">Assign role</button>
+              </div>
+            } @else {
+              <p class="access-notice">Role assignments are read-only. A system Administrator manages project access.</p>
+            }
+            @if (accessLoading()) { <div class="empty">Loading project access...</div> } @else {
+              <div class="access-user-list">
+                @for (user of accessUsers(); track user.id) {
+                  <article class="access-user"><div class="access-user-identity"><span>{{ user.displayName.slice(0, 1).toUpperCase() }}</span><div><strong>{{ user.displayName }}</strong><small>{{ user.email }}</small></div></div><div class="access-role-list">@for (role of user.roles; track role) { <span class="access-role">{{ roleLabel(role) }} @if (canManageAccess()) { <button type="button" [disabled]="accessSaving()" [attr.aria-label]="'Remove ' + roleLabel(role) + ' from ' + user.displayName" (click)="removeRole(project.id, user.id, role)">×</button> }</span> } @empty { <em>No project role</em> }</div></article>
+                } @empty { <div class="empty">No active users are available.</div> }
+              </div>
+            }
+          </section>
+        }
+      </aside>
     }
   </div>
 </section>

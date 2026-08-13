@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export type ApiTask = {
   id: string;
@@ -31,8 +32,11 @@ export type SaveCustomFieldContext = { workItemTypeId: string | null; isRequired
 export type CreateCustomFieldRequest = { key: string; name: string; description: string | null; type: string; sortOrder: number; options: SaveCustomFieldOption[]; contexts: SaveCustomFieldContext[] };
 export type UpdateCustomFieldRequest = { name: string; description: string | null; isActive: boolean; sortOrder: number; options: SaveCustomFieldOption[]; contexts: SaveCustomFieldContext[] };
 export type WorkflowTransitionItem = { id: string; fromStatus: string; toStatus: string; sortOrder: number };
-export type WorkflowDetails = { id: string; name: string; workItemTypeId?: string | null; workItemType: string; isDefault: boolean; isInherited: boolean; statuses: string[]; transitions: WorkflowTransitionItem[] };
+export type WorkflowDetails = { id: string; name: string; projectId?: string | null; project: string; isDefault: boolean; isInherited: boolean; statuses: string[]; transitions: WorkflowTransitionItem[] };
 export type SaveWorkflowRequest = { name: string; transitions: Array<{ fromStatus: string; toStatus: string; sortOrder: number }> };
+export type BoardColumnItem = { id: string; name: string; status: string; sortOrder: number; wipLimit?: number | null; isDefaultDestination: boolean };
+export type ProjectBoardDetails = { projectId: string; columns: BoardColumnItem[] };
+export type SaveProjectBoardRequest = { columns: Array<{ name: string; status: string; sortOrder: number; wipLimit: number | null; isDefaultDestination: boolean }> };
 export type SprintTaskItem = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; dueDate?: string | null };
 export type SprintItem = { id: string; name: string; goal?: string | null; projectId: string; status: string; startDate?: string | null; endDate?: string | null; startedAt?: string | null; completedAt?: string | null; createdAt: string; tasks: SprintTaskItem[] };
 export type BacklogDetails = { projectId: string; projectName: string; sprints: SprintItem[]; backlog: SprintTaskItem[] };
@@ -44,6 +48,7 @@ export type SaveReleaseRequest = { name: string; description: string | null; pro
 export type ProjectListItem = { id: string; name: string; projectKey?: string | null; status: string; targetDate?: string | null; projectManager?: string | null; taskCount: number };
 export type ProjectDetails = ProjectListItem & { objectives?: string | null; startDate?: string | null; sponsor?: string | null; softwareApplicationId?: string | null; softwareApplicationName?: string | null; createdAt: string; updatedAt?: string | null };
 export type UpdateProjectRequest = { name: string; projectKey: string | null; objectives: string | null; status: string; startDate: string | null; targetDate: string | null; projectManager: string | null; sponsor: string | null; softwareApplicationId: string | null };
+export type ProjectAccessUser = { id: string; email: string; displayName: string; isActive: boolean; roles: string[] };
 export type SoftwareListItem = { id: string; name: string; businessOwner?: string | null; technicalOwner?: string | null; supportTeam?: string | null; criticality?: string | null; technology?: string | null; currentVersion?: string | null; isProduction: boolean; isThirdParty: boolean; vendorId?: string | null; vendorName?: string | null; linkedProjects: number; openTasks: number };
 export type SaveSoftwareRequest = { name: string; businessOwner: string | null; technicalOwner: string | null; supportTeam: string | null; criticality: string | null; technology: string | null; currentVersion: string | null; isProduction: boolean; isThirdParty: boolean; vendorId: string | null };
 export type TeamListItem = { id: string; name: string; departmentId: string; department: string; assignedTasks: number };
@@ -89,7 +94,7 @@ export type UpdateTaskRequest = CreateTaskRequest;
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api';
+  private readonly baseUrl = environment.apiBaseUrl;
 
   getTasks(query: TaskListQuery = {}): Observable<PagedTasks> {
     let params = new HttpParams();
@@ -139,19 +144,27 @@ export class TaskApiService {
     return this.http.put<CustomFieldItem>(`${this.baseUrl}/configuration/custom-fields/${id}`, request);
   }
 
-  getWorkflow(workItemTypeId?: string | null): Observable<WorkflowDetails> {
-    let params = new HttpParams(); if (workItemTypeId) params = params.set('workItemTypeId', workItemTypeId);
+  getWorkflow(projectId?: string | null): Observable<WorkflowDetails> {
+    let params = new HttpParams(); if (projectId) params = params.set('projectId', projectId);
     return this.http.get<WorkflowDetails>(`${this.baseUrl}/configuration/workflows`, { params });
   }
 
-  saveWorkflow(workItemTypeId: string | null, request: SaveWorkflowRequest): Observable<WorkflowDetails> {
-    let params = new HttpParams(); if (workItemTypeId) params = params.set('workItemTypeId', workItemTypeId);
-    return this.http.put<WorkflowDetails>(`${this.baseUrl}/configuration/workflows`, request, { params });
+  saveWorkflow(projectId: string | null, request: SaveWorkflowRequest): Observable<WorkflowDetails> {
+    const url = projectId
+      ? `${this.baseUrl}/configuration/workflows/${projectId}`
+      : `${this.baseUrl}/configuration/workflows`;
+    return this.http.put<WorkflowDetails>(url, request);
   }
 
-  resetWorkflow(workItemTypeId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/configuration/workflows`, { params: { workItemTypeId } });
+  resetWorkflow(projectId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/configuration/workflows`, { params: { projectId } });
   }
+  reconcileProjectWorkflowTasks(projectId: string): Observable<{ reconciledCount: number; entryStatus: string }> {
+    return this.http.post<{ reconciledCount: number; entryStatus: string }>(`${this.baseUrl}/configuration/workflows/${projectId}/reconcile-tasks`, {});
+  }
+
+  getProjectBoard(projectId: string): Observable<ProjectBoardDetails> { return this.http.get<ProjectBoardDetails>(`${this.baseUrl}/projects/${projectId}/board-settings`); }
+  saveProjectBoard(projectId: string, request: SaveProjectBoardRequest): Observable<ProjectBoardDetails> { return this.http.put<ProjectBoardDetails>(`${this.baseUrl}/projects/${projectId}/board-settings`, request); }
 
   getBacklog(projectId: string): Observable<BacklogDetails> { return this.http.get<BacklogDetails>(`${this.baseUrl}/sprints/backlog/${projectId}`); }
   createSprint(request: SaveSprintRequest): Observable<SprintItem> { return this.http.post<SprintItem>(`${this.baseUrl}/sprints`, request); }
@@ -180,6 +193,18 @@ export class TaskApiService {
 
   archiveProject(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/projects/${id}`);
+  }
+
+  getProjectAccess(projectId: string): Observable<ProjectAccessUser[]> {
+    return this.http.get<ProjectAccessUser[]>(`${this.baseUrl}/projects/${projectId}/access`);
+  }
+
+  addProjectRole(projectId: string, userId: string, role: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/projects/${projectId}/access/roles`, { userId, role });
+  }
+
+  removeProjectRole(projectId: string, userId: string, role: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/projects/${projectId}/access/users/${userId}/roles/${encodeURIComponent(role)}`);
   }
 
   getSoftwareApplications(): Observable<ReferenceItem[]> {
@@ -246,8 +271,8 @@ export class TaskApiService {
     return this.http.post<ApiTask>(`${this.baseUrl}/tasks`, request);
   }
 
-  changeTaskStatus(id: string, status: string, comment: string | null): Observable<ApiTaskDetails> {
-    return this.http.patch<ApiTaskDetails>(`${this.baseUrl}/tasks/${id}/status`, { status, comment });
+  changeTaskStatus(id: string, status: string, comment: string | null, requireActiveSprint = false): Observable<ApiTaskDetails> {
+    return this.http.patch<ApiTaskDetails>(`${this.baseUrl}/tasks/${id}/status`, { status, comment, requireActiveSprint });
   }
 
   updateTask(id: string, request: UpdateTaskRequest): Observable<ApiTaskDetails> {

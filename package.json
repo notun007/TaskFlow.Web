@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-development.ps1",
+    "start:web": "ng serve",
+    "start:api": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location '../TaskFlow.Api/TaskFlow.Api/bin/Debug/net10.0'; dotnet TaskFlow.Api.dll --urls http://localhost:5183\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

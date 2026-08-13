@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
+import { environment } from '../environments/environment';
 
 type Task = { apiId: string; id: string; title: string; project: string; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
 
@@ -774,7 +775,7 @@ export class TaskFlowFacade implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.loggingIn.set(false);
         if (error.status === 0 || [500, 502, 503, 504].includes(error.status)) {
-          this.loginError.set('TaskFlow.Api is unavailable or returned a server error. Check the API on http://localhost:5183 and try again.');
+          this.loginError.set(`TaskFlow.Api is unavailable or returned a server error. Check the API on ${environment.apiServerUrl} and try again.`);
         } else if (isRegistering) {
           this.loginError.set(error.status === 409
             ? 'An account with this email already exists.'

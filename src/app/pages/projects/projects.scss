@@ -1,1 +1,18 @@
 /* Projects-specific styles. Shared workspace styles live in app.scss. */
+.project-detail-tabs { display:flex; gap:6px; margin:14px 0; border-bottom:1px solid var(--line); }.project-detail-tabs button { border:0; background:transparent; padding:10px 4px; color:#687790; font-weight:700; cursor:pointer; }.project-detail-tabs button.active { color:#2f61e8; border-bottom:2px solid #2f61e8; }.board-settings-editor > p { color:#738198; font-size:12px; }.board-setting-row { display:grid; grid-template-columns:1fr 82px auto; gap:9px; align-items:end; padding:10px 0; border-bottom:1px solid #edf1f5; }.board-setting-row div:first-child,.board-setting-row label { display:grid; gap:5px; font-size:10px; color:#6e7c91; }.board-setting-row input { width:100%; height:34px; border:1px solid #dce3ed; border-radius:6px; padding:0 8px; }.board-order-actions { display:flex; gap:4px; }.board-order-actions button { width:30px; height:34px; border:1px solid #dce3ed; border-radius:6px; background:#fff; cursor:pointer; }
+.project-access-editor { padding: 20px; }
+.access-intro h3 { margin: 0 0 6px; }
+.access-intro p, .access-notice { color: #667085; font-size: 13px; }
+.access-assignment-form { display: grid; gap: 12px; margin: 18px 0; padding: 14px; border: 1px solid #e4e7ec; border-radius: 10px; background: #f8fafc; }
+.access-assignment-form label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: #344054; }
+.access-assignment-form select { min-width: 0; padding: 9px 10px; border: 1px solid #d0d5dd; border-radius: 7px; background: white; }
+.access-user-list { display: grid; gap: 10px; margin-top: 16px; }
+.access-user { padding: 12px; border: 1px solid #e4e7ec; border-radius: 10px; }
+.access-user-identity { display: flex; align-items: center; gap: 9px; }
+.access-user-identity > span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: #fff; background: #315efb; font-weight: 700; }
+.access-user-identity div { display: grid; min-width: 0; }
+.access-user-identity small { overflow: hidden; color: #667085; text-overflow: ellipsis; }
+.access-role-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.access-role-list em { color: #98a2b3; font-size: 12px; }
+.access-role { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; color: #344054; background: #eef2ff; font-size: 11px; font-weight: 600; }
+.access-role button { padding: 0; border: 0; color: #667085; background: transparent; cursor: pointer; font-size: 15px; line-height: 1; }

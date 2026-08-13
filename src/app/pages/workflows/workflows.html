@@ -2,28 +2,30 @@
   <div class="operations-heading">
     <div>
       <h1>Workflows</h1>
-      <p>Configure allowed task status transitions globally or for a specific work item type.</p>
+      <p>Configure one shared task workflow for each project.</p>
     </div>
-    <button type="button" class="primary" [disabled]="saving() || loading()" (click)="save()">
-      {{ saving() ? 'Saving...' : 'Save workflow' }}
-    </button>
+    <div class="workflow-heading-actions">
+      <button type="button" class="primary" [disabled]="saving() || loading()" (click)="save()">
+        {{ saving() ? 'Saving...' : 'Save workflow' }}
+      </button>
+    </div>
   </div>
   <section class="workflow-toolbar">
     <label
-      >Workflow context<select
-        [value]="selectedTypeId()"
-        (change)="selectType($any($event.target).value)"
+      >Project workflow<select
+        [ngModel]="selectedProjectId()"
+        (ngModelChange)="selectProject($event)"
       >
-        <option value="">Default — all work item types</option>
-        @for (type of workItemTypes(); track type.id) {
-          <option [value]="type.id">{{ type.name }}</option>
+        <option value="">System default - fallback</option>
+        @for (project of projects(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
         }
       </select></label
     ><label
-      >Workflow name<input [value]="name()" (input)="name.set($any($event.target).value)"
+      >Workflow name<input [ngModel]="name()" (ngModelChange)="name.set($event)"
     /></label>
     @if (workflow()?.isInherited) {
-      <span class="inheritance-badge">Inherited from default</span>
+      <span class="inheritance-badge">Inherited from system default</span>
     }
   </section>
   @if (error()) {
@@ -46,31 +48,32 @@
     @if (loading()) {
       <div class="empty">Loading workflow...</div>
     } @else {
-      @for (transition of transitions(); track $index; let index = $index) {
+      @for (transition of transitions(); track transition.clientId; let index = $index) {
         <div class="workflow-transition-row">
           <select
-            [value]="transition.fromStatus"
-            (change)="updateTransition(index, 'fromStatus', $any($event.target).value)"
+            [ngModel]="transition.fromStatus"
+            (ngModelChange)="updateTransition(index, 'fromStatus', $event)"
           >
             @for (status of workflow()?.statuses ?? []; track status) {
               <option [value]="status">{{ status }}</option>
             }</select
           ><span class="transition-arrow">→</span
           ><select
-            [value]="transition.toStatus"
-            (change)="updateTransition(index, 'toStatus', $any($event.target).value)"
+            [ngModel]="transition.toStatus"
+            (ngModelChange)="updateTransition(index, 'toStatus', $event)"
           >
             @for (status of workflow()?.statuses ?? []; track status) {
               <option [value]="status">{{ status }}</option>
             }</select
           ><input
             type="number"
-            [value]="transition.sortOrder"
-            (input)="updateSortOrder(index, +$any($event.target).value)"
+            [ngModel]="transition.sortOrder"
+            (ngModelChange)="updateSortOrder(index, +$event)"
           /><button
             type="button"
             class="remove-transition"
             aria-label="Remove transition"
+            title="Remove transition"
             (click)="removeTransition(index)"
           >
             ×
@@ -81,9 +84,9 @@
       }
     }
   </section>
-  @if (selectedTypeId() && !workflow()?.isInherited) {
+  @if (selectedProjectId() && !workflow()?.isInherited) {
     <div class="workflow-footer">
-      <p>Resetting removes this override and restores the default workflow.</p>
+      <p>Resetting removes this project workflow and restores the system default.</p>
       <button type="button" class="danger-button" [disabled]="saving()" (click)="reset()">
         Reset to default
       </button>

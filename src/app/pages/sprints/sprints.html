@@ -1,6 +1,13 @@
 <section class="backlog-screen">
   <div class="backlog-heading"><div><h1>Sprints</h1><p>Create, plan, start, and complete project sprints.</p></div><button type="button" class="primary" [disabled]="!projects().length" (click)="openCreate()">+ Create sprint</button></div>
   <div class="backlog-toolbar"><label>Project<select [value]="projectId()" (change)="selectProject($any($event.target).value)"><option value="">Select project</option>@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><button type="button" class="secondary" [disabled]="loading() || !projectId()" (click)="load()">Refresh</button><span>Manage planned, active, and completed sprints.</span></div>
+  <section class="sprint-lifecycle" aria-label="Sprint lifecycle">
+    <div><span class="lifecycle-step planned">1</span><p><strong>Planned</strong><small>Prepare dates, goal, and tasks.</small></p></div>
+    <i aria-hidden="true">→</i>
+    <div><span class="lifecycle-step active">2</span><p><strong>Active</strong><small>One active sprint per project.</small></p></div>
+    <i aria-hidden="true">→</i>
+    <div><span class="lifecycle-step completed">3</span><p><strong>Completed</strong><small>Closed history; unfinished work returns to backlog.</small></p></div>
+  </section>
   @if (error()) { <p class="form-message error">{{ error() }}</p> } @if (message()) { <p class="form-message success">{{ message() }}</p> }
   @if (loading()) { <div class="backlog-loading">Loading sprints...</div> } @else if (data(); as plan) {
     <div class="sprint-list">

@@ -11,9 +11,21 @@ export class BacklogPage implements OnInit {
   readonly showSaveConfirmation = signal(false);
   readonly workItemTypes = signal<WorkItemTypeReference[]>([]); readonly showBacklogItemEditor = signal(false); readonly showBacklogItemConfirmation = signal(false); readonly backlogItemProjectId = signal(''); readonly backlogItemTitle = signal(''); readonly backlogItemDescription = signal(''); readonly backlogItemType = signal('Bug'); readonly backlogItemPriority = signal('Medium'); readonly backlogItemDueDate = signal(''); readonly savingBacklogItem = signal(false); readonly backlogItemError = signal('');
   readonly createdBacklogProjectId = signal('');
+  readonly sprintSelections = signal<Record<string, string>>({});
   ngOnInit() { this.api.getProjects().subscribe({ next: projects => this.projects.set(projects) }); this.api.getWorkItemTypeReferences().subscribe({ next: types => { this.workItemTypes.set(types); if (types.length) this.backlogItemType.set(types[0].key); } }); }
   selectProject(id: string) { this.projectId.set(id); this.data.set(null); if (id) this.load(); }
   load() { if (!this.projectId()) return; this.loading.set(true); this.error.set(''); this.api.getBacklog(this.projectId()).subscribe({ next: data => { this.data.set(data); this.loading.set(false); }, error: () => { this.loading.set(false); this.error.set('Backlog could not be loaded.'); } }); }
+  assignableSprints() { return (this.data()?.sprints ?? []).filter(sprint => sprint.status === 'Active' || sprint.status === 'Planned'); }
+  backlogRows() {
+    const plan = this.data();
+    if (!plan) return [];
+    return [
+      ...plan.backlog.map(task => ({ task, sprint: null as SprintItem | null })),
+      ...plan.sprints.flatMap(sprint => sprint.tasks.map(task => ({ task, sprint }))),
+    ];
+  }
+  selectSprint(taskId: string, sprintId: string) { this.sprintSelections.update(values => ({ ...values, [taskId]: sprintId })); }
+  assignToSprint(task: SprintTaskItem) { const sprintId = this.sprintSelections()[task.id]; if (!sprintId) { this.error.set(`Select a sprint for ${task.taskNumber}.`); return; } const sprint = this.assignableSprints().find(item => item.id === sprintId); if (!sprint) { this.error.set('The selected sprint is no longer available.'); return; } this.saving.set(true); this.error.set(''); this.message.set(''); this.api.assignTaskToSprint(task.id, sprintId).subscribe({ next: () => { this.saving.set(false); this.message.set(`${task.taskNumber} assigned to ${sprint.name}.`); this.load(); }, error: (error: HttpErrorResponse) => { this.saving.set(false); this.error.set(error.error?.message || 'Task could not be assigned to the sprint.'); } }); }
   openCreate() { this.editingId.set(null); this.sprintProjectId.set(''); this.sprintName.set(`Sprint ${(this.data()?.sprints.length ?? 0) + 1}`); this.sprintGoal.set(''); this.sprintStart.set(''); this.sprintEnd.set(''); this.error.set(''); this.showEditor.set(true); }
   openEdit(sprint: SprintItem) { this.editingId.set(sprint.id); this.sprintProjectId.set(sprint.projectId); this.sprintName.set(sprint.name); this.sprintGoal.set(sprint.goal ?? ''); this.sprintStart.set(sprint.startDate ?? ''); this.sprintEnd.set(sprint.endDate ?? ''); this.error.set(''); this.showEditor.set(true); }
   closeEditor() { if (!this.saving()) this.showEditor.set(false); }

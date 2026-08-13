@@ -1,8 +1,135 @@
 <section class="board-screen">
-  <div class="board-heading"><div><h1>Board</h1><p>Move work through its configured workflow. Invalid transitions are safely rejected.</p></div><button type="button" class="secondary" [disabled]="loading()" (click)="load()">Refresh</button></div>
-  <div class="board-filters"><label><span>Search</span><input placeholder="Task title or number" [value]="search()" (input)="search.set($any($event.target).value)" (keydown.enter)="load()" /></label><label><span>Project</span><select [value]="projectId()" (change)="projectId.set($any($event.target).value); load()"><option value="">All projects</option>@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><button type="button" class="primary" (click)="load()">Apply</button><button type="button" class="secondary" (click)="clearFilters()">Clear</button><span class="board-total">{{ visibleCount() }} tasks</span></div>
-  @if (error()) { <p class="form-message error">{{ error() }}</p> } @if (message()) { <p class="form-message success">{{ message() }}</p> }
-  @if (loading()) { <div class="board-loading">Loading board...</div> } @else {
-    <div class="kanban-board">@for (status of statuses; track status) { <section class="kanban-column" [class.drop-target]="dragTarget() === status" (dragover)="allowDrop(status, $event)" (dragleave)="leaveDrop(status)" (drop)="drop(status, $event)"><header><span class="column-dot" [attr.data-status]="status"></span><h2>{{ label(status) }}</h2><strong>{{ tasksFor(status).length }}</strong></header><div class="kanban-cards">@for (task of tasksFor(status); track task.id) { <article class="kanban-card" draggable="true" [class.dragging]="draggedTask()?.id === task.id" (dragstart)="startDrag(task, $event)" (dragend)="endDrag()"><div class="card-key"><span>{{ task.taskNumber }}</span><span class="card-type">{{ label(task.type) }}</span></div><h3>{{ task.title }}</h3><p>{{ task.projectName || 'Unassigned project' }}</p><footer><span class="card-priority" [class]="priorityClass(task.priority)">{{ task.priority }}</span><time>{{ task.dueDate ? (task.dueDate | date:'MMM d') : 'No due date' }}</time></footer></article> } @empty { <div class="column-empty">Drop tasks here</div> }</div></section> }</div>
+  <div class="board-heading">
+    <div>
+      <h1>Board</h1>
+      <p>Move work through its configured workflow. Only valid next steps accept a drop.</p>
+    </div>
+    <button type="button" class="secondary" [disabled]="loading()" (click)="load()">
+      Refresh
+    </button>
+  </div>
+
+  <div class="board-filters">
+    <label>
+      <span>Search</span>
+      <input
+        placeholder="Task title or number"
+        [value]="search()"
+        (input)="search.set($any($event.target).value)"
+        (keydown.enter)="load()"
+      />
+    </label>
+    <label>
+      <span>Project</span>
+      <select
+        [value]="projectId()"
+        (change)="selectProject($any($event.target).value)"
+      >
+        <option value="" disabled>Select project</option>
+        @for (project of projects(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Sprint</span>
+      <select [value]="sprintId()" (change)="selectSprint($any($event.target).value)">
+        <option value="" disabled>Select sprint</option>
+        @for (sprint of sprints(); track sprint.id) { <option [value]="sprint.id">{{ sprint.name }} ({{ sprint.status }})</option> }
+      </select>
+    </label>
+    <label>
+      <span>Type</span>
+      <select [value]="typeFilter()" (change)="typeFilter.set($any($event.target).value)">
+        <option value="">All types</option>
+        @for (type of taskTypes(); track type) { <option [value]="type">{{ label(type) }}</option> }
+      </select>
+    </label>
+    <button type="button" class="primary" (click)="load()">Apply</button>
+    <button type="button" class="secondary" (click)="clearFilters()">Clear</button>
+    <span class="board-total">{{ visibleCount() }} tasks</span>
+  </div>
+
+  @if (draggedTask()) {
+    <div class="board-drag-help" [class.loading]="loadingTransitions()">
+      <strong>{{ draggedTask()?.taskNumber }}</strong>
+      @if (loadingTransitions()) {
+        <span>Checking available workflow actions…</span>
+      } @else if (allowedDropStatuses()?.length) {
+        <span>Allowed next steps: {{ allowedDropLabels() }}</span>
+      } @else {
+        <span>No workflow actions are available from {{ label(draggedTask()?.status ?? '') }}.</span>
+      }
+    </div>
+  }
+
+  @if (error()) {
+    <p class="form-message error">{{ error() }}</p>
+  }
+  @if (message()) {
+    <p class="form-message success">{{ message() }}</p>
+  }
+  @if (!loading() && selectedSprint(); as sprint) {
+    @if (sprint.status === 'Planned') { <p class="form-message board-read-only">This sprint is Planned. Start it to move tasks; this Board is read-only.</p> }
+    @else if (sprint.status === 'Completed') { <p class="form-message board-read-only">This sprint is Completed and retained as read-only history.</p> }
+  }
+  @if (!loading() && projectId() && !sprintId()) {
+    <p class="form-message error">This project has no active or planned sprint. Create or start a sprint and assign tasks before using its Board.</p>
+  }
+
+  @if (loading()) {
+    <div class="board-loading">Loading board...</div>
+  } @else {
+    <div class="kanban-board" [class.drag-active]="!!draggedTask()">
+      @for (column of columns(); track column.status) {
+        @let status = column.status;
+        <section
+          class="kanban-column"
+          [class.drop-target]="dragTarget() === status"
+          [class.valid-drop]="isAllowedDrop(status)"
+          [class.invalid-drop]="isInvalidDrop(status)"
+          [class.current-status]="draggedTask()?.status === status"
+          (dragover)="allowDrop(status, $event)"
+          (dragleave)="leaveDrop(status)"
+          (drop)="drop(status, $event)"
+        >
+          <header>
+            <span class="column-dot" [attr.data-status]="status"></span>
+            <h2>{{ column.name }}</h2>
+            <strong>{{ tasksFor(status).length }}</strong>
+            @if (column.wipLimit) { <small>Limit {{ column.wipLimit }}</small> }
+          </header>
+          <div class="kanban-cards">
+            @for (task of tasksFor(status); track task.id) {
+              <article
+                class="kanban-card"
+                [draggable]="!boardReadOnly()"
+                [class.read-only]="boardReadOnly()"
+                [class.dragging]="draggedTask()?.id === task.id"
+                (dragstart)="startDrag(task, $event)"
+                (dragend)="endDrag()"
+              >
+                <div class="card-key">
+                  <span>{{ task.taskNumber }}</span>
+                  <span class="card-type">{{ label(task.type) }}</span>
+                </div>
+                <h3>{{ task.title }}</h3>
+                <p>{{ task.projectName || 'Unassigned project' }}</p>
+                <footer>
+                  <span class="card-priority" [class]="priorityClass(task.priority)">
+                    {{ task.priority }}
+                  </span>
+                  <time>{{ task.dueDate ? (task.dueDate | date: 'MMM d') : 'No due date' }}</time>
+                </footer>
+              </article>
+            } @empty {
+              <div class="column-empty">
+                {{ isAllowedDrop(status) ? 'Release task here' : 'No tasks' }}
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
   }
 </section>
