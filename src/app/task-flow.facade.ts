@@ -3,10 +3,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
+import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
 import { environment } from '../environments/environment';
 
-type Task = { apiId: string; id: string; title: string; project: string; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
+type Task = { apiId: string; id: string; title: string; project: string; epicId: string | null; epicName: string | null; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
 
 @Injectable()
 export class TaskFlowFacade implements OnInit {
@@ -25,6 +25,9 @@ export class TaskFlowFacade implements OnInit {
   readonly workItemTypes = signal<WorkItemTypeReference[]>([]);
   readonly taskTitle = signal('');
   readonly taskProjectId = signal('');
+  readonly taskEpicId = signal('');
+  readonly epics = signal<EpicListItem[]>([]);
+  readonly createEpics = computed(() => this.epics().filter(x => x.projectId === this.taskProjectId() && x.status === 'Active'));
   readonly taskType = signal('Bug');
   readonly taskPriority = signal('Medium');
   readonly taskDueDate = signal('');
@@ -62,6 +65,8 @@ export class TaskFlowFacade implements OnInit {
   readonly taskStatusFilter = signal('');
   readonly taskPriorityFilter = signal('');
   readonly taskProjectFilter = signal('');
+  readonly taskEpicFilter = signal('');
+  readonly taskFilterEpics = computed(() => this.epics().filter(epic => !this.taskProjectFilter() || epic.projectId === this.taskProjectFilter()));
   readonly taskSort = signal('dueDate:asc');
   readonly taskPage = signal(1);
   readonly taskPageSize = signal(10);
@@ -79,6 +84,8 @@ export class TaskFlowFacade implements OnInit {
   readonly editTaskTitle = signal('');
   readonly editTaskDescription = signal('');
   readonly editTaskProjectId = signal('');
+  readonly editTaskEpicId = signal('');
+  readonly editEpics = computed(() => this.epics().filter(x => x.projectId === this.editTaskProjectId() && x.status === 'Active'));
   readonly editTaskType = signal('Bug');
   readonly editTaskPriority = signal('Medium');
   readonly editTaskDueDate = signal('');
@@ -188,7 +195,7 @@ export class TaskFlowFacade implements OnInit {
     this.router.events.subscribe(event => {
       if (!(event instanceof NavigationEnd)) return;
       const path = event.urlAfterRedirects.split('?')[0].replace(/^\//, '');
-      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', 'transition-permissions': 'Transition Permissions', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
+      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', epics: 'Epics', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', 'transition-permissions': 'Transition Permissions', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
       this.activeNav.set(section);
       this.loadSection(section);
     });
@@ -223,17 +230,21 @@ export class TaskFlowFacade implements OnInit {
       },
       error: () => this.workItemTypes.set([])
     });
+    this.taskApi.getEpics().subscribe({ next: epics => this.epics.set(epics), error: () => this.epics.set([]) });
   }
 
   private loadTasks() {
     this.loadingTasks.set(true);
     this.taskLoadError.set('');
     const [sortBy, sortDirection] = this.taskSort().split(':');
+    const epicFilter = this.taskEpicFilter();
     this.taskApi.getTasks({
       search: this.search().trim(),
       status: this.taskStatusFilter(),
       priority: this.taskPriorityFilter(),
       projectId: this.taskProjectFilter(),
+      epicId: epicFilter && !epicFilter.startsWith('__') ? epicFilter : undefined,
+      epicAssignment: epicFilter === '__assigned' ? 'assigned' : epicFilter === '__unassigned' ? 'unassigned' : undefined,
       sortBy,
       sortDirection,
       page: this.taskPage(),
@@ -277,6 +288,7 @@ export class TaskFlowFacade implements OnInit {
     this.taskStatusFilter.set('');
     this.taskPriorityFilter.set('');
     this.taskProjectFilter.set('');
+    this.taskEpicFilter.set('');
     this.taskSort.set('dueDate:asc');
     this.taskPage.set(1);
     this.loadTasks();
@@ -349,6 +361,8 @@ export class TaskFlowFacade implements OnInit {
       id: task.taskNumber,
       title: task.title,
       project: task.projectName ?? 'Unassigned project',
+      epicId: task.epicId ?? null,
+      epicName: task.epicName ?? null,
       software: this.formatEnum(task.type),
       owner: 'Unassigned',
       status: this.formatEnum(task.status),
@@ -460,6 +474,7 @@ export class TaskFlowFacade implements OnInit {
     this.editTaskTitle.set(task.title);
     this.editTaskDescription.set(task.description || '');
     this.editTaskProjectId.set(task.projectId);
+    this.editTaskEpicId.set(task.epicId || '');
     this.editTaskType.set(task.type);
     this.editTaskPriority.set(task.priority);
     this.editTaskDueDate.set(task.dueDate ? task.dueDate.slice(0, 10) : '');
@@ -484,6 +499,7 @@ export class TaskFlowFacade implements OnInit {
       priority: this.editTaskPriority(),
       severity: this.editTaskPriority(),
       projectId: this.editTaskProjectId(),
+      epicId: this.editTaskEpicId() || null,
       softwareApplicationId: null,
       dueDate: this.editTaskDueDate() || null
       ,customFields: this.serializeCustomFields(this.editCustomFields(), this.editCustomFieldValues())
@@ -690,6 +706,7 @@ export class TaskFlowFacade implements OnInit {
       priority: this.taskPriority(),
       severity: this.taskPriority(),
       projectId: this.taskProjectId(),
+      epicId: this.taskEpicId() || null,
       softwareApplicationId: null,
       dueDate: this.taskDueDate() || null
       ,customFields: this.serializeCustomFields(this.createCustomFields(), this.createCustomFieldValues())
@@ -720,6 +737,10 @@ export class TaskFlowFacade implements OnInit {
 
   changeCreateTaskType(type: string) { this.taskType.set(type); this.loadCreateCustomFields(type); }
   changeEditTaskType(type: string) { this.editTaskType.set(type); this.loadEditCustomFields(type); }
+  changeTaskProjectFilter(id: string) { this.taskProjectFilter.set(id); this.taskEpicFilter.set(''); }
+  changeTaskEpicFilter(value: string) { this.taskEpicFilter.set(value); this.taskPage.set(1); this.loadTasks(); }
+  changeCreateTaskProject(id: string) { this.taskProjectId.set(id); this.taskEpicId.set(''); }
+  changeEditTaskProject(id: string) { this.editTaskProjectId.set(id); this.editTaskEpicId.set(''); }
   setCreateCustomField(id: string, value: string | string[]) { this.createCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   setEditCustomField(id: string, value: string | string[]) { this.editCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   customFieldValue(values: Record<string, string | string[]>, id: string) { const value = values[id]; return Array.isArray(value) ? '' : value ?? ''; }

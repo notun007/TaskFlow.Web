@@ -232,11 +232,24 @@
     ><label
       >Project<select
         [value]="h.taskProjectFilter()"
-        (change)="h.taskProjectFilter.set($any($event.target).value)"
+        (change)="h.changeTaskProjectFilter($any($event.target).value)"
       >
         <option value="">All projects</option>
         @for (project of h.projects(); track project.id) {
           <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select></label
+    ><label
+      >Epic<select
+        [value]="h.taskEpicFilter()"
+        (change)="h.changeTaskEpicFilter($any($event.target).value)"
+      >
+        <option value="">All tasks</option>
+        <option value="__assigned">With any Epic</option>
+        <option value="__unassigned">Without Epic</option>
+        <option disabled>──────────</option>
+        @for (epic of h.taskFilterEpics(); track epic.id) {
+          <option [value]="epic.id">{{ epic.name }}</option>
         }
       </select></label
     ><label
@@ -276,7 +289,8 @@
           </div>
           <div class="project">
             <strong>{{ task.project }}</strong
-            ><small>{{ task.software }}</small>
+            >@if (task.epicName) { <small class="task-epic">Epic: {{ task.epicName }}</small> }
+            <small>{{ task.software }}</small>
           </div>
           <div class="owner">
             <span class="mini-avatar">{{ h.initials(task.owner) }}</span

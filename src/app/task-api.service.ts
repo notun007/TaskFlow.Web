@@ -12,9 +12,11 @@ export type ApiTask = {
   priority: string;
   dueDate?: string | null;
   projectName?: string | null;
+  epicId?: string | null;
+  epicName?: string | null;
 };
 export type PagedTasks = { items: ApiTask[]; totalCount: number; page: number; pageSize: number };
-export type TaskListQuery = { search?: string; status?: string; priority?: string; projectId?: string; sortBy?: string; sortDirection?: string; page?: number; pageSize?: number };
+export type TaskListQuery = { search?: string; status?: string; priority?: string; projectId?: string; epicId?: string; epicAssignment?: 'assigned' | 'unassigned'; sortBy?: string; sortDirection?: string; page?: number; pageSize?: number };
 
 export type ReferenceItem = { id: string; name: string };
 export type WorkItemTypeReference = { key: string; name: string };
@@ -38,7 +40,7 @@ export type TransitionPermissionItem = { fromStatus: string; toStatus: string; r
 export type BoardColumnItem = { id: string; name: string; status: string; sortOrder: number; wipLimit?: number | null; isDefaultDestination: boolean };
 export type ProjectBoardDetails = { projectId: string; columns: BoardColumnItem[] };
 export type SaveProjectBoardRequest = { columns: Array<{ name: string; status: string; sortOrder: number; wipLimit: number | null; isDefaultDestination: boolean }> };
-export type SprintTaskItem = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; dueDate?: string | null };
+export type SprintTaskItem = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; dueDate?: string | null; epicId?: string | null; epicName?: string | null };
 export type SprintItem = { id: string; name: string; goal?: string | null; projectId: string; status: string; startDate?: string | null; endDate?: string | null; startedAt?: string | null; completedAt?: string | null; createdAt: string; tasks: SprintTaskItem[] };
 export type BacklogDetails = { projectId: string; projectName: string; sprints: SprintItem[]; backlog: SprintTaskItem[] };
 export type SaveSprintRequest = { name: string; goal: string | null; projectId: string; startDate: string | null; endDate: string | null };
@@ -49,6 +51,8 @@ export type SaveReleaseRequest = { name: string; description: string | null; pro
 export type ProjectListItem = { id: string; name: string; projectKey?: string | null; status: string; targetDate?: string | null; projectManager?: string | null; taskCount: number };
 export type ProjectDetails = ProjectListItem & { objectives?: string | null; startDate?: string | null; sponsor?: string | null; softwareApplicationId?: string | null; softwareApplicationName?: string | null; createdAt: string; updatedAt?: string | null };
 export type UpdateProjectRequest = { name: string; projectKey: string | null; objectives: string | null; status: string; startDate: string | null; targetDate: string | null; projectManager: string | null; sponsor: string | null; softwareApplicationId: string | null };
+export type EpicListItem = { id: string; name: string; description?: string | null; projectId: string; projectName: string; status: string; targetDate?: string | null; totalItems: number; completedItems: number; progressPercent: number; createdAt: string };
+export type SaveEpicRequest = { name: string; description: string | null; projectId: string; targetDate: string | null };
 export type ProjectAccessUser = { id: string; email: string; displayName: string; isActive: boolean; roles: string[] };
 export type SoftwareListItem = { id: string; name: string; businessOwner?: string | null; technicalOwner?: string | null; supportTeam?: string | null; criticality?: string | null; technology?: string | null; currentVersion?: string | null; isProduction: boolean; isThirdParty: boolean; vendorId?: string | null; vendorName?: string | null; linkedProjects: number; openTasks: number };
 export type SaveSoftwareRequest = { name: string; businessOwner: string | null; technicalOwner: string | null; supportTeam: string | null; criticality: string | null; technology: string | null; currentVersion: string | null; isProduction: boolean; isThirdParty: boolean; vendorId: string | null };
@@ -68,6 +72,7 @@ export type ApiTaskDetails = ApiTask & {
   description?: string | null;
   severity?: string | null;
   projectId: string;
+  epicId?: string | null;
   projectName: string;
   createdAt: string;
   updatedAt?: string | null;
@@ -86,6 +91,7 @@ export type CreateTaskRequest = {
   priority: string;
   severity: string | null;
   projectId: string;
+  epicId?: string | null;
   softwareApplicationId: string | null;
   dueDate: string | null;
   customFields: SaveTaskCustomFieldValue[];
@@ -198,6 +204,14 @@ export class TaskApiService {
   archiveProject(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/projects/${id}`);
   }
+
+  getEpics(projectId?: string): Observable<EpicListItem[]> {
+    return this.http.get<EpicListItem[]>(`${this.baseUrl}/epics`, { params: projectId ? { projectId } : {} });
+  }
+
+  createEpic(request: SaveEpicRequest): Observable<EpicListItem> { return this.http.post<EpicListItem>(`${this.baseUrl}/epics`, request); }
+  updateEpic(id: string, request: SaveEpicRequest): Observable<EpicListItem> { return this.http.put<EpicListItem>(`${this.baseUrl}/epics/${id}`, request); }
+  changeEpicStatus(id: string, status: string): Observable<EpicListItem> { return this.http.patch<EpicListItem>(`${this.baseUrl}/epics/${id}/status`, { status }); }
 
   getProjectAccess(projectId: string): Observable<ProjectAccessUser[]> {
     return this.http.get<ProjectAccessUser[]>(`${this.baseUrl}/projects/${projectId}/access`);

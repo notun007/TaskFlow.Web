@@ -115,6 +115,7 @@
                 </div>
                 <h3>{{ task.title }}</h3>
                 <p>{{ task.projectName || 'Unassigned project' }}</p>
+                @if (task.epicName) { <p class="card-epic">Epic: {{ task.epicName }}</p> }
                 <footer>
                   <span class="card-priority" [class]="priorityClass(task.priority)">
                     {{ task.priority }}

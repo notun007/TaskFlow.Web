@@ -32,13 +32,16 @@
   </main>
 } @else {
 <div class="shell">
-  <aside class="sidebar">
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
+    <button type="button" class="sidebar-toggle" (click)="toggleSidebar()" aria-controls="workspace-navigation" [attr.aria-expanded]="!sidebarCollapsed()" [attr.aria-label]="sidebarCollapsed() ? 'Expand menu' : 'Collapse menu'" [attr.title]="sidebarCollapsed() ? 'Expand menu' : 'Collapse menu'">
+      <span aria-hidden="true">‹</span>
+    </button>
     <div class="brand"><span class="brand-mark">TF</span><span>TaskFlow</span></div>
     <div class="workspace-label">WORKSPACE</div>
-    <nav>
-      @for (item of ['Dashboard', 'My Work', 'Board', 'Backlog', 'Sprints', 'Releases', 'Projects', 'Software', 'Teams', 'Departments', 'Vendors', 'Work Item Types', 'Custom Fields', 'Workflows', 'Transition Permissions', 'Reports', 'Audit Log', 'Create Account']; track item) {
-        <button class="nav-item" [class.selected]="activeNav() === item" (click)="setNav(item)">
-          <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Departments' ? '▦' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : item === 'Create Account' ? '+' : '◌' }}</span>{{ item }}
+    <nav id="workspace-navigation">
+      @for (item of ['Dashboard', 'My Work', 'Board', 'Backlog', 'Sprints', 'Releases', 'Projects', 'Epics', 'Software', 'Teams', 'Departments', 'Vendors', 'Work Item Types', 'Custom Fields', 'Workflows', 'Transition Permissions', 'Reports', 'Audit Log', 'Create Account']; track item) {
+        <button class="nav-item" [class.selected]="activeNav() === item" (click)="setNav(item)" [attr.title]="sidebarCollapsed() ? item : null">
+          <span class="nav-icon">{{ item === 'Dashboard' ? '◈' : item === 'My Work' ? '◫' : item === 'Projects' ? '▤' : item === 'Software' ? '▣' : item === 'Teams' ? '◉' : item === 'Departments' ? '▦' : item === 'Vendors' ? '◇' : item === 'Reports' ? '◒' : item === 'Create Account' ? '+' : '◌' }}</span><span class="nav-label">{{ item }}</span>
         </button>
       }
     </nav>
@@ -63,7 +66,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><div><p class="eyebrow">NEW WORK ITEM</p><h2>Create a task</h2></div><button aria-label="Close" (click)="showCreate.set(false)">×</button></div>
       <label>Task title<input placeholder="What needs to be done?" [value]="taskTitle()" (input)="taskTitle.set($any($event.target).value)" /></label>
-      <label>Project<select [value]="taskProjectId()" (change)="taskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      <label>Project<select [value]="taskProjectId()" (change)="changeCreateTaskProject($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      <label>Epic (optional)<select [value]="taskEpicId()" (change)="taskEpicId.set($any($event.target).value)"><option value="">No Epic</option>@for (epic of createEpics(); track epic.id) {<option [value]="epic.id">{{ epic.name }}</option>}</select></label>
       @if (!projects().length) {<p class="form-message error">No active projects are available.</p>}
       <div class="modal-grid">
         <label>Type<select [value]="taskType()" (change)="changeCreateTaskType($any($event.target).value)">@for (type of workItemTypes(); track type.key) { <option [value]="type.key">{{ type.name }}</option> }</select></label>
@@ -92,7 +96,8 @@
       <div class="modal-head"><div><p class="eyebrow">TASK DETAILS</p><h2>Edit task</h2></div><button aria-label="Close" (click)="showEditTask.set(false)">×</button></div>
       <label>Task title<input [value]="editTaskTitle()" (input)="editTaskTitle.set($any($event.target).value)" /></label>
       <label>Description<textarea rows="4" [value]="editTaskDescription()" (input)="editTaskDescription.set($any($event.target).value)"></textarea></label>
-      <label>Project<select [value]="editTaskProjectId()" (change)="editTaskProjectId.set($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      <label>Project<select [value]="editTaskProjectId()" (change)="changeEditTaskProject($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+      <label>Epic (optional)<select [value]="editTaskEpicId()" (change)="editTaskEpicId.set($any($event.target).value)"><option value="">No Epic</option>@for (epic of editEpics(); track epic.id) {<option [value]="epic.id">{{ epic.name }}</option>}</select></label>
       <div class="modal-grid"><label>Type<select [value]="editTaskType()" (change)="changeEditTaskType($any($event.target).value)">@for (type of workItemTypes(); track type.key) { <option [value]="type.key">{{ type.name }}</option> }</select></label><label>Priority<select [value]="editTaskPriority()" (change)="editTaskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label></div>
       <label>Due date<input type="date" [value]="editTaskDueDate()" (input)="editTaskDueDate.set($any($event.target).value)" /></label>
       @if (editCustomFields().length) { <section class="dynamic-fields"><h3>Additional information</h3>@for (field of editCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
