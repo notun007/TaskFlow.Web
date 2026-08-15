@@ -3,10 +3,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
+import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, FeatureListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
 import { environment } from '../environments/environment';
 
-type Task = { apiId: string; id: string; title: string; project: string; epicId: string | null; epicName: string | null; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
+type Task = { apiId: string; id: string; title: string; project: string; epicId: string | null; epicName: string | null; featureId: string | null; featureName: string | null; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
 
 @Injectable()
 export class TaskFlowFacade implements OnInit {
@@ -26,8 +26,11 @@ export class TaskFlowFacade implements OnInit {
   readonly taskTitle = signal('');
   readonly taskProjectId = signal('');
   readonly taskEpicId = signal('');
+  readonly taskFeatureId = signal('');
   readonly epics = signal<EpicListItem[]>([]);
+  readonly features = signal<FeatureListItem[]>([]);
   readonly createEpics = computed(() => this.epics().filter(x => x.projectId === this.taskProjectId() && x.status === 'Active'));
+  readonly createFeatures = computed(() => this.features().filter(x => x.projectId === this.taskProjectId() && (!this.taskEpicId() || x.epicId === this.taskEpicId()) && x.status === 'Active'));
   readonly taskType = signal('Bug');
   readonly taskPriority = signal('Medium');
   readonly taskDueDate = signal('');
@@ -66,7 +69,9 @@ export class TaskFlowFacade implements OnInit {
   readonly taskPriorityFilter = signal('');
   readonly taskProjectFilter = signal('');
   readonly taskEpicFilter = signal('');
+  readonly taskFeatureFilter = signal('');
   readonly taskFilterEpics = computed(() => this.epics().filter(epic => !this.taskProjectFilter() || epic.projectId === this.taskProjectFilter()));
+  readonly taskFilterFeatures = computed(() => this.features().filter(feature => (!this.taskProjectFilter() || feature.projectId === this.taskProjectFilter()) && (!this.taskEpicFilter() || this.taskEpicFilter().startsWith('__') || feature.epicId === this.taskEpicFilter())));
   readonly taskSort = signal('dueDate:asc');
   readonly taskPage = signal(1);
   readonly taskPageSize = signal(10);
@@ -85,7 +90,9 @@ export class TaskFlowFacade implements OnInit {
   readonly editTaskDescription = signal('');
   readonly editTaskProjectId = signal('');
   readonly editTaskEpicId = signal('');
+  readonly editTaskFeatureId = signal('');
   readonly editEpics = computed(() => this.epics().filter(x => x.projectId === this.editTaskProjectId() && x.status === 'Active'));
+  readonly editFeatures = computed(() => this.features().filter(x => x.projectId === this.editTaskProjectId() && (!this.editTaskEpicId() || x.epicId === this.editTaskEpicId()) && x.status === 'Active'));
   readonly editTaskType = signal('Bug');
   readonly editTaskPriority = signal('Medium');
   readonly editTaskDueDate = signal('');
@@ -195,7 +202,7 @@ export class TaskFlowFacade implements OnInit {
     this.router.events.subscribe(event => {
       if (!(event instanceof NavigationEnd)) return;
       const path = event.urlAfterRedirects.split('?')[0].replace(/^\//, '');
-      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', epics: 'Epics', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', 'transition-permissions': 'Transition Permissions', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
+      const section = ({ dashboard: 'Dashboard', 'my-work': 'My Work', board: 'Board', backlog: 'Backlog', sprints: 'Sprints', releases: 'Releases', projects: 'Projects', epics: 'Epics', features: 'Features', software: 'Software', teams: 'Teams', departments: 'Departments', vendors: 'Vendors', 'work-item-types': 'Work Item Types', 'custom-fields': 'Custom Fields', workflows: 'Workflows', 'transition-permissions': 'Transition Permissions', reports: 'Reports', 'audit-log': 'Audit Log', 'create-account': 'Create Account' } as Record<string, string>)[path] || 'Dashboard';
       this.activeNav.set(section);
       this.loadSection(section);
     });
@@ -231,6 +238,7 @@ export class TaskFlowFacade implements OnInit {
       error: () => this.workItemTypes.set([])
     });
     this.taskApi.getEpics().subscribe({ next: epics => this.epics.set(epics), error: () => this.epics.set([]) });
+    this.taskApi.getFeatures().subscribe({ next: features => this.features.set(features), error: () => this.features.set([]) });
   }
 
   private loadTasks() {
@@ -238,6 +246,7 @@ export class TaskFlowFacade implements OnInit {
     this.taskLoadError.set('');
     const [sortBy, sortDirection] = this.taskSort().split(':');
     const epicFilter = this.taskEpicFilter();
+    const featureFilter = this.taskFeatureFilter();
     this.taskApi.getTasks({
       search: this.search().trim(),
       status: this.taskStatusFilter(),
@@ -245,6 +254,8 @@ export class TaskFlowFacade implements OnInit {
       projectId: this.taskProjectFilter(),
       epicId: epicFilter && !epicFilter.startsWith('__') ? epicFilter : undefined,
       epicAssignment: epicFilter === '__assigned' ? 'assigned' : epicFilter === '__unassigned' ? 'unassigned' : undefined,
+      featureId: featureFilter && !featureFilter.startsWith('__') ? featureFilter : undefined,
+      featureAssignment: featureFilter === '__assigned' ? 'assigned' : featureFilter === '__unassigned' ? 'unassigned' : undefined,
       sortBy,
       sortDirection,
       page: this.taskPage(),
@@ -289,6 +300,7 @@ export class TaskFlowFacade implements OnInit {
     this.taskPriorityFilter.set('');
     this.taskProjectFilter.set('');
     this.taskEpicFilter.set('');
+    this.taskFeatureFilter.set('');
     this.taskSort.set('dueDate:asc');
     this.taskPage.set(1);
     this.loadTasks();
@@ -363,6 +375,8 @@ export class TaskFlowFacade implements OnInit {
       project: task.projectName ?? 'Unassigned project',
       epicId: task.epicId ?? null,
       epicName: task.epicName ?? null,
+      featureId: task.featureId ?? null,
+      featureName: task.featureName ?? null,
       software: this.formatEnum(task.type),
       owner: 'Unassigned',
       status: this.formatEnum(task.status),
@@ -475,11 +489,13 @@ export class TaskFlowFacade implements OnInit {
     this.editTaskDescription.set(task.description || '');
     this.editTaskProjectId.set(task.projectId);
     this.editTaskEpicId.set(task.epicId || '');
+    this.editTaskFeatureId.set(task.featureId || '');
     this.editTaskType.set(task.type);
     this.editTaskPriority.set(task.priority);
     this.editTaskDueDate.set(task.dueDate ? task.dueDate.slice(0, 10) : '');
     this.taskEditError.set('');
     this.showEditTask.set(true);
+    this.taskApi.getFeatures(task.projectId).subscribe({ next: features => this.features.set(features), error: () => undefined });
     this.loadEditCustomFields(task.type, task);
   }
 
@@ -500,6 +516,7 @@ export class TaskFlowFacade implements OnInit {
       severity: this.editTaskPriority(),
       projectId: this.editTaskProjectId(),
       epicId: this.editTaskEpicId() || null,
+      featureId: this.editTaskFeatureId() || null,
       softwareApplicationId: null,
       dueDate: this.editTaskDueDate() || null
       ,customFields: this.serializeCustomFields(this.editCustomFields(), this.editCustomFieldValues())
@@ -637,6 +654,8 @@ export class TaskFlowFacade implements OnInit {
       return;
     }
     this.showCreate.set(true);
+    this.taskApi.getEpics().subscribe({ next: epics => this.epics.set(epics), error: () => undefined });
+    this.taskApi.getFeatures().subscribe({ next: features => this.features.set(features), error: () => undefined });
     this.loadCreateCustomFields(this.taskType());
   }
 
@@ -707,6 +726,7 @@ export class TaskFlowFacade implements OnInit {
       severity: this.taskPriority(),
       projectId: this.taskProjectId(),
       epicId: this.taskEpicId() || null,
+      featureId: this.taskFeatureId() || null,
       softwareApplicationId: null,
       dueDate: this.taskDueDate() || null
       ,customFields: this.serializeCustomFields(this.createCustomFields(), this.createCustomFieldValues())
@@ -716,6 +736,8 @@ export class TaskFlowFacade implements OnInit {
         this.showCreate.set(false);
         this.taskTitle.set('');
         this.taskDueDate.set('');
+        this.taskEpicId.set('');
+        this.taskFeatureId.set('');
         this.activeNav.set('My Work');
         this.loadTasks();
         this.loadDashboard();
@@ -737,10 +759,15 @@ export class TaskFlowFacade implements OnInit {
 
   changeCreateTaskType(type: string) { this.taskType.set(type); this.loadCreateCustomFields(type); }
   changeEditTaskType(type: string) { this.editTaskType.set(type); this.loadEditCustomFields(type); }
-  changeTaskProjectFilter(id: string) { this.taskProjectFilter.set(id); this.taskEpicFilter.set(''); }
-  changeTaskEpicFilter(value: string) { this.taskEpicFilter.set(value); this.taskPage.set(1); this.loadTasks(); }
-  changeCreateTaskProject(id: string) { this.taskProjectId.set(id); this.taskEpicId.set(''); }
-  changeEditTaskProject(id: string) { this.editTaskProjectId.set(id); this.editTaskEpicId.set(''); }
+  changeTaskProjectFilter(id: string) { this.taskProjectFilter.set(id); this.taskEpicFilter.set(''); this.taskFeatureFilter.set(''); }
+  changeTaskEpicFilter(value: string) { this.taskEpicFilter.set(value); this.taskFeatureFilter.set(''); this.taskPage.set(1); this.loadTasks(); }
+  changeTaskFeatureFilter(value: string) { this.taskFeatureFilter.set(value); this.taskPage.set(1); this.loadTasks(); }
+  changeCreateTaskProject(id: string) { this.taskProjectId.set(id); this.taskEpicId.set(''); this.taskFeatureId.set(''); }
+  changeCreateTaskEpic(id: string) { this.taskEpicId.set(id); this.taskFeatureId.set(''); }
+  changeCreateTaskFeature(id: string) { this.taskFeatureId.set(id); const feature = this.features().find(x => x.id === id); if (feature) this.taskEpicId.set(feature.epicId); }
+  changeEditTaskProject(id: string) { this.editTaskProjectId.set(id); this.editTaskEpicId.set(''); this.editTaskFeatureId.set(''); }
+  changeEditTaskEpic(id: string) { this.editTaskEpicId.set(id); this.editTaskFeatureId.set(''); }
+  changeEditTaskFeature(id: string) { this.editTaskFeatureId.set(id); const feature = this.features().find(x => x.id === id); if (feature) this.editTaskEpicId.set(feature.epicId); }
   setCreateCustomField(id: string, value: string | string[]) { this.createCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   setEditCustomField(id: string, value: string | string[]) { this.editCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   customFieldValue(values: Record<string, string | string[]>, id: string) { const value = values[id]; return Array.isArray(value) ? '' : value ?? ''; }

@@ -119,6 +119,8 @@
             <dt>Project</dt>
             <dd>{{ task.projectName }}</dd>
           </div>
+          <div><dt>Epic</dt><dd>{{ task.epicName || 'No Epic' }}</dd></div>
+          <div><dt>Feature</dt><dd>{{ task.featureName || 'No Feature' }}</dd></div>
           <div>
             <dt>Type</dt>
             <dd>{{ h.formatEnum(task.type) }}</dd>
@@ -253,6 +255,19 @@
         }
       </select></label
     ><label
+      >Feature<select
+        [value]="h.taskFeatureFilter()"
+        (change)="h.changeTaskFeatureFilter($any($event.target).value)"
+      >
+        <option value="">All tasks</option>
+        <option value="__assigned">With any Feature</option>
+        <option value="__unassigned">Without Feature</option>
+        <option disabled>──────────</option>
+        @for (feature of h.taskFilterFeatures(); track feature.id) {
+          <option [value]="feature.id">{{ feature.name }}</option>
+        }
+      </select></label
+    ><label
       >Sort<select [value]="h.taskSort()" (change)="h.taskSort.set($any($event.target).value)">
         <option value="dueDate:asc">Due date ↑</option>
         <option value="dueDate:desc">Due date ↓</option>
@@ -290,6 +305,7 @@
           <div class="project">
             <strong>{{ task.project }}</strong
             >@if (task.epicName) { <small class="task-epic">Epic: {{ task.epicName }}</small> }
+            @if (task.featureName) { <small class="task-epic">Feature: {{ task.featureName }}</small> }
             <small>{{ task.software }}</small>
           </div>
           <div class="owner">

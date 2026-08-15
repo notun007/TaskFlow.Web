@@ -9,6 +9,7 @@ export const routes: Routes = [
   { path: 'releases', loadComponent: () => import('./pages/releases/releases').then(m => m.ReleasesPage) },
   { path: 'projects', loadComponent: () => import('./pages/projects/projects').then(m => m.ProjectsPage) },
   { path: 'epics', loadComponent: () => import('./pages/epics/epics').then(m => m.EpicsPage) },
+  { path: 'features', loadComponent: () => import('./pages/features/features').then(m => m.FeaturesPage) },
   { path: 'software', loadComponent: () => import('./pages/software/software').then(m => m.SoftwarePage) },
   { path: 'teams', loadComponent: () => import('./pages/teams/teams').then(m => m.TeamsPage) },
   { path: 'departments', loadComponent: () => import('./pages/departments/departments').then(m => m.DepartmentsPage) },
