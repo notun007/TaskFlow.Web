@@ -1,5 +1,5 @@
 <section class="backlog-screen">
-  <div class="backlog-heading"><div><h1>Backlog</h1><p>Create, schedule, and track the complete project work inventory.</p></div><button type="button" class="primary" [disabled]="!projects().length" (click)="openBacklogItemEditor()">+ Add backlog item</button></div>
+  <div class="backlog-heading"><div><p>Create, schedule, and track the complete project work inventory.</p></div><button type="button" class="primary" [disabled]="!projects().length" (click)="openBacklogItemEditor()">+ Add backlog item</button></div>
   <div class="backlog-toolbar"><label>Project<select [value]="projectId()" (change)="selectProject($any($event.target).value)"><option value="">Select project</option>@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><button type="button" class="secondary" [disabled]="loading() || !projectId()" (click)="load()">Refresh</button><span>Select a project to review all work and sprint assignments.</span></div>
   @if (error()) { <p class="form-message error">{{ error() }}</p> }
   @if (message()) { <div class="form-message success sprint-meta"><span>{{ message() }}</span>@if (createdBacklogProjectId()) { <button type="button" class="text-button" (click)="viewCreatedBacklog()">View backlog</button> }</div> }

@@ -1,4 +1,10 @@
 /* My Work-specific styles. Shared workspace styles live in app.scss. */
+.task-details-link { display:block; margin-top:6px; padding:0; border:0; background:transparent; color:#315fe8; font-size:10px; font-weight:700; cursor:pointer; text-align:left; }
+.task-details-link:hover { text-decoration:underline; }
+.task-details-screen button.task-link-item { cursor:pointer; transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease; }
+.task-details-screen button.task-link-item:hover { border-color:#b8c9f5; background:#f5f8ff; box-shadow:0 4px 12px rgba(35,73,150,.10); transform:translateY(-1px); }
+.task-details-screen button.task-link-item:hover strong { color:#2857d5; text-decoration:underline; text-underline-offset:2px; }
+.task-details-screen button.task-link-item:focus-visible { outline:3px solid rgba(45,91,255,.22); outline-offset:2px; border-color:#6f91f1; }
 .task-details-screen .description-panel p,
 .task-details-screen .comment-item p,
 .task-details-screen .detail-empty,

@@ -1,6 +1,6 @@
 @let h = workspace;
 <section class="operations-screen">
-  <div class="operations-heading"><div><h1>Software</h1><p>Manage applications, ownership, lifecycle, and delivery impact.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New software</button></div>
+  <div class="operations-heading"><div><p>Manage applications, ownership, lifecycle, and delivery impact.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New software</button></div>
   <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search software..." [value]="h.operationalSearch()" (input)="h.operationalSearch.set($any($event.target).value)" /></label><span>{{ h.filteredSoftware().length }} applications</span></div>
   @if (h.operationsError()) { <p class="form-message error">{{ h.operationsError() }}</p> }
   <div class="operations-layout" [class.has-detail]="h.selectedSoftware()"><section class="operations-table"><div class="software-head"><span>Application</span><span>Owner</span><span>Criticality</span><span>Lifecycle</span><span>Projects</span><span>Open tasks</span></div>

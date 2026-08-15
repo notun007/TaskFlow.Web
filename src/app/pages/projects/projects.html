@@ -1,6 +1,6 @@
 @let h = workspace;
 <section class="projects-screen" aria-labelledby="projects-title">
-  <div class="projects-heading"><div><h1 id="projects-title">Projects</h1><p>Plan delivery, ownership, workflow, and board layout.</p></div><button type="button" class="primary" (click)="h.openNewProject()">+ New project</button></div>
+  <div class="projects-heading"><div><p>Plan delivery, ownership, workflow, and board layout.</p></div><button type="button" class="primary" (click)="h.openNewProject()">+ New project</button></div>
   @if (h.projectListError()) { <p class="form-message error">{{ h.projectListError() }}</p> }
   <div class="projects-layout" [class.has-detail]="h.selectedProject()">
     <section class="projects-panel">

@@ -1,5 +1,5 @@
 <section class="epics-screen">
-  <header><div><h1>Epics</h1><p>Group related delivery items into business outcomes. Epics are planning containers and are never assigned to a sprint.</p></div><button class="primary" (click)="openCreate()">+ New Epic</button></header>
+  <header><div><p>Group related delivery items into business outcomes. Epics are planning containers and are never assigned to a sprint.</p></div><button class="primary" (click)="openCreate()">+ New Epic</button></header>
   <div class="epic-toolbar"><label>Project<select [value]="projectId()" (change)="selectProject($any($event.target).value)">@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><button class="secondary" (click)="load()">Refresh</button></div>
   @if (error() || message()) { <div class="epic-toast" [class.error]="!!error()" role="status" aria-live="polite"><span class="epic-toast__icon" aria-hidden="true">{{ error() ? '!' : '✓' }}</span><span>{{ error() || message() }}</span><button type="button" aria-label="Dismiss notification" (click)="dismissToast()">×</button></div> }
   <div class="epic-grid">

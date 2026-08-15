@@ -1,5 +1,5 @@
 <section class="operations-screen">
-  <div class="operations-heading"><div><h1>Custom Fields</h1><p>Define reusable data fields and control which work item types use them.</p></div><button type="button" class="primary" (click)="openCreate()">+ New field</button></div>
+  <div class="operations-heading"><div><p>Define reusable data fields and control which work item types use them.</p></div><button type="button" class="primary" (click)="openCreate()">+ New field</button></div>
   <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search custom fields..." [value]="search()" (input)="search.set($any($event.target).value)" /></label><span>{{ filtered().length }} fields</span></div>
   @if (loadError()) { <p class="form-message error">{{ loadError() }}</p> }
   <section class="operations-table compact custom-field-table">

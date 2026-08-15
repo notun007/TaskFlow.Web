@@ -1,5 +1,5 @@
 <section class="backlog-screen">
-  <div class="backlog-heading"><div><h1>Sprints</h1><p>Create, plan, start, and complete project sprints.</p></div><button type="button" class="primary" [disabled]="!projects().length" (click)="openCreate()">+ Create sprint</button></div>
+  <div class="backlog-heading"><div><p>Create, plan, start, and complete project sprints.</p></div><button type="button" class="primary" [disabled]="!projects().length" (click)="openCreate()">+ Create sprint</button></div>
   <div class="backlog-toolbar"><label>Project<select [value]="projectId()" (change)="selectProject($any($event.target).value)"><option value="">Select project</option>@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><button type="button" class="secondary" [disabled]="loading() || !projectId()" (click)="load()">Refresh</button><span>Manage planned, active, and completed sprints.</span></div>
   <section class="sprint-lifecycle" aria-label="Sprint lifecycle">
     <div><span class="lifecycle-step planned">1</span><p><strong>Planned</strong><small>Prepare dates, goal, and tasks.</small></p></div>

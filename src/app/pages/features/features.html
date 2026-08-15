@@ -1,5 +1,5 @@
 <section class="features-screen">
-  <header><div><h1>Features</h1><p>Divide Epics into deliverable capabilities. Features organize work but are not assigned directly to sprints.</p></div><button class="primary" (click)="openCreate()">+ New Feature</button></header>
+  <header><div><p>Divide Epics into deliverable capabilities. Features organize work but are not assigned directly to sprints.</p></div><button class="primary" (click)="openCreate()">+ New Feature</button></header>
   <div class="feature-toolbar"><label>Project<select [value]="projectId()" (change)="selectProject($any($event.target).value)">@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }}</option> }</select></label><label>Epic<select [value]="epicId()" (change)="selectEpic($any($event.target).value)"><option value="">All Epics</option>@for (epic of epics(); track epic.id) { <option [value]="epic.id">{{ epic.name }}</option> }</select></label><button class="secondary" (click)="load()">Refresh</button></div>
   @if (error() || message()) { <div class="feature-toast" [class.error]="!!error()" role="status" aria-live="polite"><span>{{ error() ? '!' : '✓' }}</span><strong>{{ error() || message() }}</strong><button type="button" aria-label="Dismiss notification" (click)="dismissToast()">×</button></div> }
   <div class="feature-grid">

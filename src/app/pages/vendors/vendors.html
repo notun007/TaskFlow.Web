@@ -1,6 +1,6 @@
 @let h = workspace;
 <section class="operations-screen">
-  <div class="operations-heading"><div><h1>Vendors</h1><p>Monitor external partners, support contacts, contracts, and SLAs.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New vendor</button></div>
+  <div class="operations-heading"><div><p>Monitor external partners, support contacts, contracts, and SLAs.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New vendor</button></div>
   <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search vendors..." [value]="h.operationalSearch()" (input)="h.operationalSearch.set($any($event.target).value)" /></label><span>{{ h.filteredVendors().length }} vendors</span></div>
   @if (h.operationsError()) { <p class="form-message error">{{ h.operationsError() }}</p> }
   <div class="operations-layout" [class.has-detail]="h.selectedVendor()"><section class="operations-table"><div class="vendor-head"><span>Vendor</span><span>Support contact</span><span>Contract</span><span>Applications</span></div>

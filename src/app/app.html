@@ -45,12 +45,12 @@
         </button>
       }
     </nav>
-    <div class="sidebar-bottom"><div class="security"><span>●</span><div><strong>Bank secure</strong><small>Audit logging enabled</small></div></div><button class="help">? <span>Help & support</span></button></div>
+    <div class="sidebar-bottom"><div class="security"><span>●</span><div><strong>Bank secure</strong><small>Audit logging enabled</small></div></div></div>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div class="crumb">Operations <span>/</span> Work management</div>
+      <div class="header-page-title" aria-live="polite">{{ activeNav() }}</div>
       <div class="top-actions"><label class="search"><span>⌕</span><input placeholder="Search tasks..." [value]="search()" (input)="search.set($any($event.target).value)" (keydown.enter)="applyTaskFilters()" /></label><button class="icon-button" aria-label="Notifications">♢<i></i></button>@if (auth.accessToken()) {<span class="signed-in-user">{{ auth.currentUser()?.email }}</span><button class="auth-button" (click)="openChangePassword()">Change password</button><button class="auth-button" (click)="logout()">Sign out</button>}<div class="avatar" [attr.title]="currentUserName()">{{ currentUserInitials() }}</div></div>
     </header>
 
@@ -63,19 +63,23 @@
 
 @if (showCreate()) {
   <div class="modal-backdrop">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal create-task-modal" (click)="$event.stopPropagation()">
       <div class="modal-head"><div><p class="eyebrow">NEW WORK ITEM</p><h2>Create a task</h2></div><button aria-label="Close" (click)="showCreate.set(false)">×</button></div>
-      <label>Task title<input placeholder="What needs to be done?" [value]="taskTitle()" (input)="taskTitle.set($any($event.target).value)" /></label>
-      <label>Project<select [value]="taskProjectId()" (change)="changeCreateTaskProject($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
-      <label>Epic (optional)<select [value]="taskEpicId()" (change)="changeCreateTaskEpic($any($event.target).value)"><option value="">No Epic</option>@for (epic of createEpics(); track epic.id) {<option [value]="epic.id">{{ epic.name }}</option>}</select></label>
-      <label>Feature (optional)<select [value]="taskFeatureId()" (change)="changeCreateTaskFeature($any($event.target).value)"><option value="">No Feature</option>@for (feature of createFeatures(); track feature.id) {<option [value]="feature.id">{{ feature.name }}</option>}</select></label>
+      <div class="create-task-grid summary-grid"><label>Task title<input placeholder="What needs to be done?" [value]="taskTitle()" (input)="taskTitle.set($any($event.target).value)" /></label><label>Description <small>Optional</small><textarea rows="2" placeholder="Add context or acceptance notes" [value]="taskDescription()" (input)="taskDescription.set($any($event.target).value)"></textarea></label></div>
+      <div class="create-task-section"><div class="create-task-section-title"><span>Planning context</span><small>Choose where this work belongs</small></div><div class="create-task-grid planning-grid">
+        <label>Project<select [value]="taskProjectId()" (change)="changeCreateTaskProject($any($event.target).value)">@for (project of projects(); track project.id) {<option [value]="project.id">{{ project.name }}</option>}</select></label>
+        <label>Epic <small>Optional</small><select [value]="taskEpicId()" (change)="changeCreateTaskEpic($any($event.target).value)"><option value="">No Epic</option>@for (epic of createEpics(); track epic.id) {<option [value]="epic.id">{{ epic.name }}</option>}</select></label>
+        <label>Feature <small>Optional</small><select [value]="taskFeatureId()" (change)="changeCreateTaskFeature($any($event.target).value)"><option value="">No Feature</option>@for (feature of createFeatures(); track feature.id) {<option [value]="feature.id">{{ feature.name }}</option>}</select></label>
+        <label>Software <small>Optional</small><select [value]="taskSoftwareApplicationId()" (change)="taskSoftwareApplicationId.set($any($event.target).value)"><option value="">No Software</option>@for (application of softwareApplications(); track application.id) {<option [value]="application.id">{{ application.name }}</option>}</select></label>
+      </div></div>
       @if (!projects().length) {<p class="form-message error">No active projects are available.</p>}
-      <div class="modal-grid">
+      <div class="create-task-section"><div class="create-task-section-title"><span>Delivery details</span><small>Set execution priority and timing</small></div><div class="create-task-grid delivery-grid">
         <label>Type<select [value]="taskType()" (change)="changeCreateTaskType($any($event.target).value)">@for (type of workItemTypes(); track type.key) { <option [value]="type.key">{{ type.name }}</option> }</select></label>
         <label>Priority<select [value]="taskPriority()" (change)="taskPriority.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label>
-      </div>
-      <label>Due date<input type="date" [value]="taskDueDate()" (input)="taskDueDate.set($any($event.target).value)" /></label>
-      @if (createCustomFields().length) { <section class="dynamic-fields"><h3>Additional information</h3>@for (field of createCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
+        @if (taskType().toLowerCase() === 'bug') { <label>Severity <small>Defect impact</small><select [value]="taskSeverity()" (change)="taskSeverity.set($any($event.target).value)"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select></label> }
+        <label>Due date<input type="date" [value]="taskDueDate()" (input)="taskDueDate.set($any($event.target).value)" /></label>
+      </div></div>
+      @if (createCustomFields().length) { <details class="dynamic-fields create-task-additional" [open]="hasRequiredCreateFields()"><summary><span>Additional information</span><small>{{ createCustomFields().length }} field(s) @if (hasRequiredCreateFields()) { · required }</small></summary><div class="create-task-grid additional-grid">@for (field of createCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
         @switch (field.type) {
           @case ('LongText') { <textarea rows="3" [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)"></textarea> }
           @case ('Number') { <input type="number" [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)" /> }
@@ -84,11 +88,15 @@
           @case ('Select') { <select [value]="customFieldValue(createCustomFieldValues(), field.id)" (change)="setCreateCustomField(field.id, $any($event.target).value)"><option value="">Select...</option>@for (option of field.options; track option.id) { <option [value]="option.value">{{ option.label }}</option> }</select> }
           @case ('MultiSelect') { <div class="option-checks">@for (option of field.options; track option.id) { <label class="option-check"><input type="checkbox" [checked]="customFieldSelected(createCustomFieldValues(), field.id, option.value)" (change)="toggleCustomFieldOption('create', field.id, option.value, $any($event.target).checked)" />{{ option.label }}</label> }</div> }
           @default { <input [value]="customFieldValue(createCustomFieldValues(), field.id)" (input)="setCreateCustomField(field.id, $any($event.target).value)" /> }
-        } @if (field.description) { <small>{{ field.description }}</small> }</label></div> }</section> }
+        } @if (field.description) { <small>{{ field.description }}</small> }</label></div> }</div></details> }
       @if (createError()) {<p class="form-message error">{{ createError() }}</p>}
       <div class="modal-actions"><button class="secondary" (click)="showCreate.set(false)">Cancel</button><button class="primary" [disabled]="creatingTask() || !projects().length" (click)="createTask()">{{ creatingTask() ? 'Creating...' : 'Create task' }}</button></div>
     </div>
   </div>
+}
+
+@if (taskCreateSuccess()) {
+  <div class="task-create-toast" role="status" aria-live="polite"><span aria-hidden="true">✓</span><div><strong>{{ taskCreateSuccessTitle() }}</strong><small>{{ taskCreateSuccess() }}</small></div><button type="button" aria-label="Dismiss notification" (click)="dismissTaskCreateSuccess()">×</button></div>
 }
 
 @if (showEditTask()) {

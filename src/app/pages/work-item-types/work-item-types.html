@@ -1,5 +1,5 @@
 <section class="operations-screen">
-  <div class="operations-heading"><div><h1>Work Item Types</h1><p>Configure the kinds of work users can create across TaskFlow.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New type</button></div>
+  <div class="operations-heading"><div><p>Configure the kinds of work users can create across TaskFlow.</p></div><button type="button" class="primary" (click)="openCreate()">＋ New type</button></div>
   <div class="operations-toolbar"><label><span>⌕</span><input placeholder="Search types..." [value]="search()" (input)="search.set($any($event.target).value)" /></label><span>{{ filtered().length }} types</span></div>
   @if (loadError()) { <p class="form-message error">{{ loadError() }}</p> }
   <div class="operations-layout" [class.has-detail]="selected()"><section class="operations-table compact"><div class="type-head"><span>Type</span><span>Key</span><span>Status</span><span>Work items</span></div>

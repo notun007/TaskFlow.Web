@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, FeatureListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
+import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, FeatureListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, SprintItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
 import { environment } from '../environments/environment';
 
 type Task = { apiId: string; id: string; title: string; project: string; epicId: string | null; epicName: string | null; featureId: string | null; featureName: string | null; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
@@ -24,20 +24,26 @@ export class TaskFlowFacade implements OnInit {
   readonly projects = signal<ReferenceItem[]>([]);
   readonly workItemTypes = signal<WorkItemTypeReference[]>([]);
   readonly taskTitle = signal('');
+  readonly taskDescription = signal('');
   readonly taskProjectId = signal('');
   readonly taskEpicId = signal('');
   readonly taskFeatureId = signal('');
+  readonly taskSoftwareApplicationId = signal('');
   readonly epics = signal<EpicListItem[]>([]);
   readonly features = signal<FeatureListItem[]>([]);
   readonly createEpics = computed(() => this.epics().filter(x => x.projectId === this.taskProjectId() && x.status === 'Active'));
   readonly createFeatures = computed(() => this.features().filter(x => x.projectId === this.taskProjectId() && (!this.taskEpicId() || x.epicId === this.taskEpicId()) && x.status === 'Active'));
   readonly taskType = signal('Bug');
   readonly taskPriority = signal('Medium');
+  readonly taskSeverity = signal('Medium');
   readonly taskDueDate = signal('');
   readonly createCustomFields = signal<ApplicableCustomField[]>([]);
+  readonly hasRequiredCreateFields = computed(() => this.createCustomFields().some(field => field.isRequired));
   readonly createCustomFieldValues = signal<Record<string, string | string[]>>({});
   readonly createError = signal('');
   readonly creatingTask = signal(false);
+  readonly taskCreateSuccess = signal('');
+  readonly taskCreateSuccessTitle = signal('Task saved');
   readonly loginEmail = signal('');
   readonly loginPassword = signal('');
   readonly loginConfirmPassword = signal('');
@@ -100,6 +106,20 @@ export class TaskFlowFacade implements OnInit {
   readonly editCustomFieldValues = signal<Record<string, string | string[]>>({});
   readonly savingTaskEdit = signal(false);
   readonly taskEditError = signal('');
+  readonly showSubtaskEditor = signal(false);
+  readonly subtaskTitle = signal('');
+  readonly subtaskDescription = signal('');
+  readonly subtaskType = signal('Task');
+  readonly subtaskPriority = signal('Medium');
+  readonly subtaskSeverity = signal('Medium');
+  readonly subtaskDueDate = signal('');
+  readonly subtaskSprintId = signal('');
+  readonly subtaskSprints = signal<SprintItem[]>([]);
+  readonly subtaskCustomFields = signal<ApplicableCustomField[]>([]);
+  readonly hasRequiredSubtaskFields = computed(() => this.subtaskCustomFields().some(field => field.isRequired));
+  readonly subtaskCustomFieldValues = signal<Record<string, string | string[]>>({});
+  readonly savingSubtask = signal(false);
+  readonly subtaskError = signal('');
   readonly assignmentResponsibility = signal('Assignee');
   readonly assignmentPartyReference = signal('');
   readonly assignmentDisplayName = signal('');
@@ -410,6 +430,34 @@ export class TaskFlowFacade implements OnInit {
     this.newComment.set('');
     this.commentError.set('');
     this.showAssignmentModal.set(false);
+    this.showSubtaskEditor.set(false);
+  }
+
+  openSubtaskEditor() {
+    const task = this.selectedTask();
+    if (!task || task.parentTaskId) return;
+    this.subtaskTitle.set(''); this.subtaskDescription.set(''); this.subtaskType.set(this.workItemTypes().some(x => x.key === 'Task') ? 'Task' : (this.workItemTypes()[0]?.key || 'Task'));
+    this.subtaskPriority.set('Medium'); this.subtaskSeverity.set('Medium'); this.subtaskDueDate.set(''); this.subtaskSprintId.set(''); this.subtaskError.set(''); this.showSubtaskEditor.set(true);
+    this.loadSubtaskCustomFields(this.subtaskType());
+    this.taskApi.getBacklog(task.projectId).subscribe({ next: result => this.subtaskSprints.set(result.sprints.filter(x => x.status !== 'Completed')), error: () => this.subtaskSprints.set([]) });
+  }
+
+  createSubtask() {
+    const parent = this.selectedTask(); const title = this.subtaskTitle().trim();
+    if (!parent || parent.parentTaskId || !title) { this.subtaskError.set('Enter a subtask title.'); return; }
+    if (this.hasMissingRequiredFields(this.subtaskCustomFields(), this.subtaskCustomFieldValues())) { this.subtaskError.set('Complete all required additional fields.'); return; }
+    this.savingSubtask.set(true); this.subtaskError.set('');
+    this.taskApi.createSubtask(parent.id, { title, description: this.subtaskDescription().trim() || null, type: this.subtaskType(), priority: this.subtaskPriority(), severity: this.subtaskType().toLowerCase() === 'bug' ? this.subtaskSeverity() : null, dueDate: this.subtaskDueDate() || null, sprintId: this.subtaskSprintId() || null, customFields: this.serializeCustomFields(this.subtaskCustomFields(), this.subtaskCustomFieldValues()) }).subscribe({
+      next: created => {
+        this.savingSubtask.set(false);
+        this.subtaskTitle.set(''); this.subtaskDescription.set(''); this.subtaskDueDate.set('');
+        this.subtaskCustomFieldValues.set(this.defaultCustomFieldValues(this.subtaskCustomFields()));
+        this.showTaskCreateSuccess('Subtask saved', `${created.taskNumber} created successfully. You can add another subtask.`);
+        this.taskApi.getTask(parent.id).subscribe({ next: updated => this.selectedTask.set(updated), error: () => undefined });
+        this.loadTasks();
+      },
+      error: (error: HttpErrorResponse) => { this.savingSubtask.set(false); this.subtaskError.set(error.error?.message || 'Subtask could not be created.'); }
+    });
   }
 
   openAssignmentModal() {
@@ -654,6 +702,7 @@ export class TaskFlowFacade implements OnInit {
       return;
     }
     this.showCreate.set(true);
+    if (!this.softwareApplications().length) this.taskApi.getSoftwareApplications().subscribe({ next: items => this.softwareApplications.set(items), error: () => this.softwareApplications.set([]) });
     this.taskApi.getEpics().subscribe({ next: epics => this.epics.set(epics), error: () => undefined });
     this.taskApi.getFeatures().subscribe({ next: features => this.features.set(features), error: () => undefined });
     this.loadCreateCustomFields(this.taskType());
@@ -720,25 +769,24 @@ export class TaskFlowFacade implements OnInit {
     this.createError.set('');
     this.taskApi.createTask({
       title: this.taskTitle().trim(),
-      description: null,
+      description: this.taskDescription().trim() || null,
       type: this.taskType(),
       priority: this.taskPriority(),
-      severity: this.taskPriority(),
+      severity: this.taskType().toLowerCase() === 'bug' ? this.taskSeverity() : null,
       projectId: this.taskProjectId(),
       epicId: this.taskEpicId() || null,
       featureId: this.taskFeatureId() || null,
-      softwareApplicationId: null,
+      softwareApplicationId: this.taskSoftwareApplicationId() || null,
       dueDate: this.taskDueDate() || null
       ,customFields: this.serializeCustomFields(this.createCustomFields(), this.createCustomFieldValues())
     }).subscribe({
-      next: () => {
+      next: created => {
         this.creatingTask.set(false);
-        this.showCreate.set(false);
         this.taskTitle.set('');
+        this.taskDescription.set('');
         this.taskDueDate.set('');
-        this.taskEpicId.set('');
-        this.taskFeatureId.set('');
-        this.activeNav.set('My Work');
+        this.createCustomFieldValues.set({});
+        this.showTaskCreateSuccess('Task saved', `${created.taskNumber} created successfully. You can add another task.`);
         this.loadTasks();
         this.loadDashboard();
       },
@@ -751,13 +799,18 @@ export class TaskFlowFacade implements OnInit {
           this.registering.set(false);
           this.loginError.set('Your session expired. Please sign in again.');
         } else {
-          this.createError.set('The task could not be created. Please try again.');
+          this.createError.set(error.error?.message || 'The task could not be created. Please check the highlighted information and try again.');
         }
       }
     });
   }
 
+  private taskCreateSuccessTimer: ReturnType<typeof setTimeout> | null = null;
+  private showTaskCreateSuccess(title: string, message: string) { if (this.taskCreateSuccessTimer) clearTimeout(this.taskCreateSuccessTimer); this.taskCreateSuccessTitle.set(title); this.taskCreateSuccess.set(message); this.taskCreateSuccessTimer = setTimeout(() => this.dismissTaskCreateSuccess(), 4000); }
+  dismissTaskCreateSuccess() { if (this.taskCreateSuccessTimer) clearTimeout(this.taskCreateSuccessTimer); this.taskCreateSuccessTimer = null; this.taskCreateSuccess.set(''); }
+
   changeCreateTaskType(type: string) { this.taskType.set(type); this.loadCreateCustomFields(type); }
+  changeSubtaskType(type: string) { this.subtaskType.set(type); this.loadSubtaskCustomFields(type); }
   changeEditTaskType(type: string) { this.editTaskType.set(type); this.loadEditCustomFields(type); }
   changeTaskProjectFilter(id: string) { this.taskProjectFilter.set(id); this.taskEpicFilter.set(''); this.taskFeatureFilter.set(''); }
   changeTaskEpicFilter(value: string) { this.taskEpicFilter.set(value); this.taskFeatureFilter.set(''); this.taskPage.set(1); this.loadTasks(); }
@@ -769,17 +822,22 @@ export class TaskFlowFacade implements OnInit {
   changeEditTaskEpic(id: string) { this.editTaskEpicId.set(id); this.editTaskFeatureId.set(''); }
   changeEditTaskFeature(id: string) { this.editTaskFeatureId.set(id); const feature = this.features().find(x => x.id === id); if (feature) this.editTaskEpicId.set(feature.epicId); }
   setCreateCustomField(id: string, value: string | string[]) { this.createCustomFieldValues.update(values => ({ ...values, [id]: value })); }
+  setSubtaskCustomField(id: string, value: string | string[]) { this.subtaskCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   setEditCustomField(id: string, value: string | string[]) { this.editCustomFieldValues.update(values => ({ ...values, [id]: value })); }
   customFieldValue(values: Record<string, string | string[]>, id: string) { const value = values[id]; return Array.isArray(value) ? '' : value ?? ''; }
   customFieldSelected(values: Record<string, string | string[]>, id: string, option: string) { const value = values[id]; return Array.isArray(value) && value.includes(option); }
-  toggleCustomFieldOption(target: 'create' | 'edit', id: string, option: string, checked: boolean) {
-    const source = target === 'create' ? this.createCustomFieldValues : this.editCustomFieldValues;
+  toggleCustomFieldOption(target: 'create' | 'edit' | 'subtask', id: string, option: string, checked: boolean) {
+    const source = target === 'create' ? this.createCustomFieldValues : target === 'subtask' ? this.subtaskCustomFieldValues : this.editCustomFieldValues;
     const current = source()[id]; const selected = Array.isArray(current) ? current : [];
     source.update(values => ({ ...values, [id]: checked ? [...selected, option] : selected.filter(x => x !== option) }));
   }
 
   private loadCreateCustomFields(type: string) {
     this.taskApi.getApplicableCustomFields(type).subscribe({ next: fields => { const visible = fields.filter(field => field.showOnCreate); this.createCustomFields.set(visible); this.createCustomFieldValues.set(this.defaultCustomFieldValues(visible)); }, error: () => { this.createCustomFields.set([]); this.createError.set('Custom fields could not be loaded.'); } });
+  }
+
+  private loadSubtaskCustomFields(type: string) {
+    this.taskApi.getApplicableCustomFields(type).subscribe({ next: fields => { const visible = fields.filter(field => field.showOnCreate); this.subtaskCustomFields.set(visible); this.subtaskCustomFieldValues.set(this.defaultCustomFieldValues(visible)); }, error: () => { this.subtaskCustomFields.set([]); this.subtaskCustomFieldValues.set({}); this.subtaskError.set('Custom fields could not be loaded.'); } });
   }
 
   private loadEditCustomFields(type: string, task: ApiTaskDetails | null = null) {

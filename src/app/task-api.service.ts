@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 
 export type ApiTask = {
@@ -16,6 +16,10 @@ export type ApiTask = {
   epicName?: string | null;
   featureId?: string | null;
   featureName?: string | null;
+  parentTaskId?: string | null;
+  parentTaskNumber?: string | null;
+  subtaskCount?: number;
+  completedSubtaskCount?: number;
 };
 export type PagedTasks = { items: ApiTask[]; totalCount: number; page: number; pageSize: number };
 export type TaskListQuery = { search?: string; status?: string; priority?: string; projectId?: string; epicId?: string; epicAssignment?: 'assigned' | 'unassigned'; featureId?: string; featureAssignment?: 'assigned' | 'unassigned'; sortBy?: string; sortDirection?: string; page?: number; pageSize?: number };
@@ -72,6 +76,7 @@ export type ApiTaskComment = { id: string; authorReference: string; body: string
 export type ApiTaskStatusHistory = { id: string; fromStatus: string; toStatus: string; actorReference: string; comment?: string | null; createdAt: string };
 export type ApiTaskLink = { id: string; type: string; isOutgoing: boolean; otherTaskId: string; otherTaskNumber: string; otherTaskTitle: string; otherTaskStatus: string };
 export type ApiTaskAttachment = { id: string; fileName: string; contentType: string; size: number; uploadedBy: string; createdAt: string };
+export type ApiSubtask = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; sprintId?: string | null; sprintName?: string | null };
 export type ApiTaskDetails = ApiTask & {
   description?: string | null;
   severity?: string | null;
@@ -88,6 +93,8 @@ export type ApiTaskDetails = ApiTask & {
   customFields: TaskCustomFieldValue[];
   links: ApiTaskLink[];
   attachments: ApiTaskAttachment[];
+  parentTaskTitle?: string | null;
+  subtasks?: ApiSubtask[];
 };
 export type CreateTaskRequest = {
   title: string;
@@ -103,6 +110,7 @@ export type CreateTaskRequest = {
   customFields: SaveTaskCustomFieldValue[];
 };
 export type UpdateTaskRequest = CreateTaskRequest;
+export type CreateSubtaskRequest = { title: string; description: string | null; type: string; priority: string; severity: string | null; dueDate: string | null; sprintId: string | null; customFields: SaveTaskCustomFieldValue[] };
 
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
@@ -118,7 +126,7 @@ export class TaskApiService {
   }
 
   getTask(id: string): Observable<ApiTaskDetails> {
-    return this.http.get<ApiTaskDetails>(`${this.baseUrl}/tasks/${id}`);
+    return this.http.get<ApiTaskDetails>(`${this.baseUrl}/tasks/${id}`).pipe(map(task => ({ ...task, subtasks: task.subtasks ?? [] })));
   }
 
   getProjects(): Observable<ReferenceItem[]> {
@@ -297,6 +305,10 @@ export class TaskApiService {
 
   createTask(request: CreateTaskRequest): Observable<ApiTask> {
     return this.http.post<ApiTask>(`${this.baseUrl}/tasks`, request);
+  }
+
+  createSubtask(parentTaskId: string, request: CreateSubtaskRequest): Observable<ApiTaskDetails> {
+    return this.http.post<ApiTaskDetails>(`${this.baseUrl}/tasks/${parentTaskId}/subtasks`, request);
   }
 
   changeTaskStatus(id: string, status: string, comment: string | null, requireActiveSprint = false): Observable<ApiTaskDetails> {
