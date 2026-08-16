@@ -20,6 +20,11 @@ export type ApiTask = {
   parentTaskNumber?: string | null;
   subtaskCount?: number;
   completedSubtaskCount?: number;
+  ownerUserId?: string | null;
+  ownerDisplayName?: string | null;
+  reporterUserId?: string | null;
+  reporterDisplayName?: string | null;
+  estimatedEffortMinutes?: number | null;
 };
 export type PagedTasks = { items: ApiTask[]; totalCount: number; page: number; pageSize: number };
 export type TaskListQuery = { search?: string; status?: string; priority?: string; projectId?: string; epicId?: string; epicAssignment?: 'assigned' | 'unassigned'; featureId?: string; featureAssignment?: 'assigned' | 'unassigned'; sortBy?: string; sortDirection?: string; page?: number; pageSize?: number };
@@ -76,7 +81,7 @@ export type ApiTaskComment = { id: string; authorReference: string; body: string
 export type ApiTaskStatusHistory = { id: string; fromStatus: string; toStatus: string; actorReference: string; comment?: string | null; createdAt: string };
 export type ApiTaskLink = { id: string; type: string; isOutgoing: boolean; otherTaskId: string; otherTaskNumber: string; otherTaskTitle: string; otherTaskStatus: string };
 export type ApiTaskAttachment = { id: string; fileName: string; contentType: string; size: number; uploadedBy: string; createdAt: string };
-export type ApiSubtask = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; sprintId?: string | null; sprintName?: string | null };
+export type ApiSubtask = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; sprintId?: string | null; sprintName?: string | null; ownerUserId?: string | null; ownerDisplayName?: string | null; estimatedEffortMinutes?: number | null };
 export type ApiTaskDetails = ApiTask & {
   description?: string | null;
   severity?: string | null;
@@ -108,9 +113,11 @@ export type CreateTaskRequest = {
   softwareApplicationId: string | null;
   dueDate: string | null;
   customFields: SaveTaskCustomFieldValue[];
+  ownerUserId?: string | null;
+  estimatedEffortMinutes?: number | null;
 };
 export type UpdateTaskRequest = CreateTaskRequest;
-export type CreateSubtaskRequest = { title: string; description: string | null; type: string; priority: string; severity: string | null; dueDate: string | null; sprintId: string | null; customFields: SaveTaskCustomFieldValue[] };
+export type CreateSubtaskRequest = { title: string; description: string | null; type: string; priority: string; severity: string | null; dueDate: string | null; sprintId: string | null; customFields: SaveTaskCustomFieldValue[]; ownerUserId?: string | null; estimatedEffortMinutes?: number | null };
 
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {

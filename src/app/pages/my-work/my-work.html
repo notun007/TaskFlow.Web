@@ -140,6 +140,9 @@
             <dt>Priority</dt>
             <dd>{{ task.priority }}</dd>
           </div>
+          <div><dt>Owner</dt><dd>{{ task.ownerDisplayName || 'Unassigned' }}</dd></div>
+          <div><dt>Reporter</dt><dd>{{ task.reporterDisplayName || 'Unknown (existing task)' }}</dd></div>
+          <div><dt>Estimated effort</dt><dd>{{ h.formatEffort(task.estimatedEffortMinutes) }}</dd></div>
           <div>
             <dt>Due date</dt>
             <dd>{{ task.dueDate ? (task.dueDate | date: 'mediumDate') : 'No due date' }}</dd>
@@ -366,6 +369,9 @@
         @if (h.subtaskType().toLowerCase() === 'bug') { <label>Severity <small>Defect impact</small><select [value]="h.subtaskSeverity()" (change)="h.subtaskSeverity.set($any($event.target).value)"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label> }
         <label>Sprint <small>Optional</small><select [value]="h.subtaskSprintId()" (change)="h.subtaskSprintId.set($any($event.target).value)"><option value="">Backlog / schedule later</option>@for (sprint of h.subtaskSprints(); track sprint.id) { <option [value]="sprint.id">{{ sprint.name }} ({{ sprint.status }})</option> }</select></label>
         <label>Due date<input type="date" [value]="h.subtaskDueDate()" (input)="h.subtaskDueDate.set($any($event.target).value)" /></label>
+        <label>Owner <small>Optional</small><select [value]="h.subtaskOwnerUserId()" (change)="h.subtaskOwnerUserId.set($any($event.target).value)"><option value="">Unassigned</option>@for (user of h.subtaskOwnerCandidates(); track user.id) { <option [value]="user.id">{{ user.displayName }} — {{ user.email }}</option> }</select></label>
+        <label>Estimated effort <small>Optional</small><input type="number" min="0.01" step="0.25" placeholder="Example: 2" [value]="h.subtaskEffortValue() ?? ''" (input)="h.subtaskEffortValue.set($any($event.target).value ? +$any($event.target).value : null)" /></label>
+        <label>Effort unit<select [value]="h.subtaskEffortUnit()" (change)="h.subtaskEffortUnit.set($any($event.target).value)"><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days (8 hours)</option></select></label>
       </div></div>
       @if (h.subtaskCustomFields().length) { <details class="dynamic-fields create-task-additional" [open]="h.hasRequiredSubtaskFields()"><summary><span>Additional information</span><small>{{ h.subtaskCustomFields().length }} field(s) @if (h.hasRequiredSubtaskFields()) { · required }</small></summary><div class="create-task-grid additional-grid">@for (field of h.subtaskCustomFields(); track field.id) { <div class="dynamic-field"><label>{{ field.name }} @if (field.isRequired) { <span class="required">*</span> }
         @switch (field.type) {
@@ -388,7 +394,7 @@
     <section class="modal assignment-modal" role="dialog" aria-modal="true" aria-labelledby="assignment-modal-title" (click)="$event.stopPropagation()">
       <div class="modal-head"><div><p class="eyebrow">TASK ASSIGNMENT</p><h2 id="assignment-modal-title">Add assignment</h2></div><button type="button" aria-label="Close assignment dialog" [disabled]="h.savingAssignment()" (click)="h.closeAssignmentModal()">&times;</button></div>
       <div class="assignment-modal-form">
-        <label>Responsibility<select [value]="h.assignmentResponsibility()" (change)="h.assignmentResponsibility.set($any($event.target).value)"><option value="Owner">Owner</option><option value="Assignee">Assignee</option><option value="SupportingTeam">Supporting team</option><option value="Vendor">Vendor</option><option value="Approver">Approver</option></select></label>
+        <label>Responsibility<select [value]="h.assignmentResponsibility()" (change)="h.assignmentResponsibility.set($any($event.target).value)"><option value="Assignee">Assignee</option><option value="SupportingTeam">Supporting team</option><option value="Vendor">Vendor</option><option value="Approver">Approver</option></select></label>
         <label>Display name<input [value]="h.assignmentDisplayName()" (input)="h.assignmentDisplayName.set($any($event.target).value)" placeholder="Name" /></label>
         <label>Reference<input [value]="h.assignmentPartyReference()" (input)="h.assignmentPartyReference.set($any($event.target).value)" placeholder="Email, user ID, team, or vendor" /></label>
         @if (h.assignmentError()) { <p class="form-message error">{{ h.assignmentError() }}</p> }

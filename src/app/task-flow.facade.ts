@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, switchMap } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, FeatureListItem, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, SprintItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
+import { ApiTask, ApiTaskDetails, ApplicableCustomField, AuditListItem, DepartmentListItem, EpicListItem, FeatureListItem, ProjectAccessUser, ProjectDetails, ProjectListItem, ReferenceItem, SaveTaskCustomFieldValue, SoftwareListItem, SprintItem, TaskApiService, TeamListItem, VendorListItem, WorkItemTypeReference } from './task-api.service';
 import { environment } from '../environments/environment';
 
 type Task = { apiId: string; id: string; title: string; project: string; epicId: string | null; epicName: string | null; featureId: string | null; featureName: string | null; software: string; owner: string; status: string; priority: string; due: string; dueDateIso: string | null; severity: string };
@@ -37,6 +37,10 @@ export class TaskFlowFacade implements OnInit {
   readonly taskPriority = signal('Medium');
   readonly taskSeverity = signal('Medium');
   readonly taskDueDate = signal('');
+  readonly taskOwnerUserId = signal('');
+  readonly taskEffortValue = signal<number | null>(null);
+  readonly taskEffortUnit = signal<'minutes' | 'hours' | 'days'>('hours');
+  readonly createOwnerCandidates = signal<ProjectAccessUser[]>([]);
   readonly createCustomFields = signal<ApplicableCustomField[]>([]);
   readonly hasRequiredCreateFields = computed(() => this.createCustomFields().some(field => field.isRequired));
   readonly createCustomFieldValues = signal<Record<string, string | string[]>>({});
@@ -102,6 +106,10 @@ export class TaskFlowFacade implements OnInit {
   readonly editTaskType = signal('Bug');
   readonly editTaskPriority = signal('Medium');
   readonly editTaskDueDate = signal('');
+  readonly editTaskOwnerUserId = signal('');
+  readonly editTaskEffortValue = signal<number | null>(null);
+  readonly editTaskEffortUnit = signal<'minutes' | 'hours' | 'days'>('hours');
+  readonly editOwnerCandidates = signal<ProjectAccessUser[]>([]);
   readonly editCustomFields = signal<ApplicableCustomField[]>([]);
   readonly editCustomFieldValues = signal<Record<string, string | string[]>>({});
   readonly savingTaskEdit = signal(false);
@@ -114,6 +122,10 @@ export class TaskFlowFacade implements OnInit {
   readonly subtaskSeverity = signal('Medium');
   readonly subtaskDueDate = signal('');
   readonly subtaskSprintId = signal('');
+  readonly subtaskOwnerUserId = signal('');
+  readonly subtaskEffortValue = signal<number | null>(null);
+  readonly subtaskEffortUnit = signal<'minutes' | 'hours' | 'days'>('hours');
+  readonly subtaskOwnerCandidates = signal<ProjectAccessUser[]>([]);
   readonly subtaskSprints = signal<SprintItem[]>([]);
   readonly subtaskCustomFields = signal<ApplicableCustomField[]>([]);
   readonly hasRequiredSubtaskFields = computed(() => this.subtaskCustomFields().some(field => field.isRequired));
@@ -386,6 +398,12 @@ export class TaskFlowFacade implements OnInit {
   formatEnum(value: string) {
     return value === 'Uat' ? 'UAT' : value.replace(/([a-z])([A-Z])/g, '$1 $2');
   }
+  formatEffort(minutes?: number | null) {
+    if (!minutes) return 'Not estimated';
+    if (minutes % 480 === 0) return `${minutes / 480} day${minutes === 480 ? '' : 's'}`;
+    if (minutes % 60 === 0) return `${minutes / 60} hour${minutes === 60 ? '' : 's'}`;
+    return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+  }
 
   private toTask(task: ApiTask): Task {
     return {
@@ -398,7 +416,7 @@ export class TaskFlowFacade implements OnInit {
       featureId: task.featureId ?? null,
       featureName: task.featureName ?? null,
       software: this.formatEnum(task.type),
-      owner: 'Unassigned',
+      owner: task.ownerDisplayName ?? 'Unassigned',
       status: this.formatEnum(task.status),
       priority: task.priority,
       due: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date',
@@ -437,8 +455,9 @@ export class TaskFlowFacade implements OnInit {
     const task = this.selectedTask();
     if (!task || task.parentTaskId) return;
     this.subtaskTitle.set(''); this.subtaskDescription.set(''); this.subtaskType.set(this.workItemTypes().some(x => x.key === 'Task') ? 'Task' : (this.workItemTypes()[0]?.key || 'Task'));
-    this.subtaskPriority.set('Medium'); this.subtaskSeverity.set('Medium'); this.subtaskDueDate.set(''); this.subtaskSprintId.set(''); this.subtaskError.set(''); this.showSubtaskEditor.set(true);
+    this.subtaskPriority.set('Medium'); this.subtaskSeverity.set('Medium'); this.subtaskDueDate.set(''); this.subtaskSprintId.set(''); this.subtaskOwnerUserId.set(''); this.subtaskEffortValue.set(null); this.subtaskEffortUnit.set('hours'); this.subtaskError.set(''); this.showSubtaskEditor.set(true);
     this.loadSubtaskCustomFields(this.subtaskType());
+    this.loadOwners(task.projectId, this.subtaskOwnerCandidates);
     this.taskApi.getBacklog(task.projectId).subscribe({ next: result => this.subtaskSprints.set(result.sprints.filter(x => x.status !== 'Completed')), error: () => this.subtaskSprints.set([]) });
   }
 
@@ -447,10 +466,10 @@ export class TaskFlowFacade implements OnInit {
     if (!parent || parent.parentTaskId || !title) { this.subtaskError.set('Enter a subtask title.'); return; }
     if (this.hasMissingRequiredFields(this.subtaskCustomFields(), this.subtaskCustomFieldValues())) { this.subtaskError.set('Complete all required additional fields.'); return; }
     this.savingSubtask.set(true); this.subtaskError.set('');
-    this.taskApi.createSubtask(parent.id, { title, description: this.subtaskDescription().trim() || null, type: this.subtaskType(), priority: this.subtaskPriority(), severity: this.subtaskType().toLowerCase() === 'bug' ? this.subtaskSeverity() : null, dueDate: this.subtaskDueDate() || null, sprintId: this.subtaskSprintId() || null, customFields: this.serializeCustomFields(this.subtaskCustomFields(), this.subtaskCustomFieldValues()) }).subscribe({
+    this.taskApi.createSubtask(parent.id, { title, description: this.subtaskDescription().trim() || null, type: this.subtaskType(), priority: this.subtaskPriority(), severity: this.subtaskType().toLowerCase() === 'bug' ? this.subtaskSeverity() : null, dueDate: this.subtaskDueDate() || null, sprintId: this.subtaskSprintId() || null, ownerUserId: this.subtaskOwnerUserId() || null, estimatedEffortMinutes: this.effortMinutes(this.subtaskEffortValue(), this.subtaskEffortUnit()), customFields: this.serializeCustomFields(this.subtaskCustomFields(), this.subtaskCustomFieldValues()) }).subscribe({
       next: created => {
         this.savingSubtask.set(false);
-        this.subtaskTitle.set(''); this.subtaskDescription.set(''); this.subtaskDueDate.set('');
+        this.subtaskTitle.set(''); this.subtaskDescription.set(''); this.subtaskDueDate.set(''); this.subtaskOwnerUserId.set(''); this.subtaskEffortValue.set(null);
         this.subtaskCustomFieldValues.set(this.defaultCustomFieldValues(this.subtaskCustomFields()));
         this.showTaskCreateSuccess('Subtask saved', `${created.taskNumber} created successfully. You can add another subtask.`);
         this.taskApi.getTask(parent.id).subscribe({ next: updated => this.selectedTask.set(updated), error: () => undefined });
@@ -541,9 +560,12 @@ export class TaskFlowFacade implements OnInit {
     this.editTaskType.set(task.type);
     this.editTaskPriority.set(task.priority);
     this.editTaskDueDate.set(task.dueDate ? task.dueDate.slice(0, 10) : '');
+    this.editTaskOwnerUserId.set(task.ownerUserId || '');
+    this.setEffortEditor(task.estimatedEffortMinutes, this.editTaskEffortValue, this.editTaskEffortUnit);
     this.taskEditError.set('');
     this.showEditTask.set(true);
     this.taskApi.getFeatures(task.projectId).subscribe({ next: features => this.features.set(features), error: () => undefined });
+    this.loadOwners(task.projectId, this.editOwnerCandidates);
     this.loadEditCustomFields(task.type, task);
   }
 
@@ -567,6 +589,8 @@ export class TaskFlowFacade implements OnInit {
       featureId: this.editTaskFeatureId() || null,
       softwareApplicationId: null,
       dueDate: this.editTaskDueDate() || null
+      ,ownerUserId: this.editTaskOwnerUserId() || null
+      ,estimatedEffortMinutes: this.effortMinutes(this.editTaskEffortValue(), this.editTaskEffortUnit())
       ,customFields: this.serializeCustomFields(this.editCustomFields(), this.editCustomFieldValues())
     }).subscribe({
       next: updated => {
@@ -702,6 +726,7 @@ export class TaskFlowFacade implements OnInit {
       return;
     }
     this.showCreate.set(true);
+    this.loadOwners(this.taskProjectId(), this.createOwnerCandidates);
     if (!this.softwareApplications().length) this.taskApi.getSoftwareApplications().subscribe({ next: items => this.softwareApplications.set(items), error: () => this.softwareApplications.set([]) });
     this.taskApi.getEpics().subscribe({ next: epics => this.epics.set(epics), error: () => undefined });
     this.taskApi.getFeatures().subscribe({ next: features => this.features.set(features), error: () => undefined });
@@ -778,6 +803,8 @@ export class TaskFlowFacade implements OnInit {
       featureId: this.taskFeatureId() || null,
       softwareApplicationId: this.taskSoftwareApplicationId() || null,
       dueDate: this.taskDueDate() || null
+      ,ownerUserId: this.taskOwnerUserId() || null
+      ,estimatedEffortMinutes: this.effortMinutes(this.taskEffortValue(), this.taskEffortUnit())
       ,customFields: this.serializeCustomFields(this.createCustomFields(), this.createCustomFieldValues())
     }).subscribe({
       next: created => {
@@ -785,6 +812,8 @@ export class TaskFlowFacade implements OnInit {
         this.taskTitle.set('');
         this.taskDescription.set('');
         this.taskDueDate.set('');
+        this.taskOwnerUserId.set('');
+        this.taskEffortValue.set(null);
         this.createCustomFieldValues.set({});
         this.showTaskCreateSuccess('Task saved', `${created.taskNumber} created successfully. You can add another task.`);
         this.loadTasks();
@@ -815,10 +844,10 @@ export class TaskFlowFacade implements OnInit {
   changeTaskProjectFilter(id: string) { this.taskProjectFilter.set(id); this.taskEpicFilter.set(''); this.taskFeatureFilter.set(''); }
   changeTaskEpicFilter(value: string) { this.taskEpicFilter.set(value); this.taskFeatureFilter.set(''); this.taskPage.set(1); this.loadTasks(); }
   changeTaskFeatureFilter(value: string) { this.taskFeatureFilter.set(value); this.taskPage.set(1); this.loadTasks(); }
-  changeCreateTaskProject(id: string) { this.taskProjectId.set(id); this.taskEpicId.set(''); this.taskFeatureId.set(''); }
+  changeCreateTaskProject(id: string) { this.taskProjectId.set(id); this.taskEpicId.set(''); this.taskFeatureId.set(''); this.taskOwnerUserId.set(''); this.loadOwners(id, this.createOwnerCandidates); }
   changeCreateTaskEpic(id: string) { this.taskEpicId.set(id); this.taskFeatureId.set(''); }
   changeCreateTaskFeature(id: string) { this.taskFeatureId.set(id); const feature = this.features().find(x => x.id === id); if (feature) this.taskEpicId.set(feature.epicId); }
-  changeEditTaskProject(id: string) { this.editTaskProjectId.set(id); this.editTaskEpicId.set(''); this.editTaskFeatureId.set(''); }
+  changeEditTaskProject(id: string) { this.editTaskProjectId.set(id); this.editTaskEpicId.set(''); this.editTaskFeatureId.set(''); this.editTaskOwnerUserId.set(''); this.loadOwners(id, this.editOwnerCandidates); }
   changeEditTaskEpic(id: string) { this.editTaskEpicId.set(id); this.editTaskFeatureId.set(''); }
   changeEditTaskFeature(id: string) { this.editTaskFeatureId.set(id); const feature = this.features().find(x => x.id === id); if (feature) this.editTaskEpicId.set(feature.epicId); }
   setCreateCustomField(id: string, value: string | string[]) { this.createCustomFieldValues.update(values => ({ ...values, [id]: value })); }
@@ -848,6 +877,9 @@ export class TaskFlowFacade implements OnInit {
   private parseMultiSelect(value?: string | null): string[] { try { return value ? JSON.parse(value) : []; } catch { return []; } }
   private serializeCustomFields(fields: ApplicableCustomField[], values: Record<string, string | string[]>): SaveTaskCustomFieldValue[] { return fields.map(field => { const value = values[field.id]; return { customFieldDefinitionId: field.id, value: Array.isArray(value) ? JSON.stringify(value) : value?.trim() || null }; }); }
   private hasMissingRequiredFields(fields: ApplicableCustomField[], values: Record<string, string | string[]>) { return fields.some(field => field.isRequired && (!values[field.id] || (Array.isArray(values[field.id]) && !values[field.id].length))); }
+  private effortMinutes(value: number | null, unit: 'minutes' | 'hours' | 'days') { if (!value || value <= 0) return null; return Math.round(value * (unit === 'days' ? 480 : unit === 'hours' ? 60 : 1)); }
+  private setEffortEditor(minutes: number | null | undefined, valueSignal: { set(value: number | null): void }, unitSignal: { set(value: 'minutes' | 'hours' | 'days'): void }) { if (!minutes) { valueSignal.set(null); unitSignal.set('hours'); } else if (minutes % 480 === 0) { valueSignal.set(minutes / 480); unitSignal.set('days'); } else if (minutes % 60 === 0) { valueSignal.set(minutes / 60); unitSignal.set('hours'); } else { valueSignal.set(minutes); unitSignal.set('minutes'); } }
+  private loadOwners(projectId: string, target: { set(value: ProjectAccessUser[]): void }) { if (!projectId) { target.set([]); return; } this.taskApi.getProjectAccess(projectId).subscribe({ next: users => target.set(users.filter(user => user.isActive && user.roles.length > 0)), error: () => target.set([]) }); }
 
   login() {
     const isRegistering = this.registering();
