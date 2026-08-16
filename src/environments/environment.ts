@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api',
-  apiServerUrl: 'the configured TaskFlow API',
+  apiBaseUrl: 'http://172.17.253.40:5183/api',
+  apiServerUrl: 'http://172.17.253.40:5183',
 };

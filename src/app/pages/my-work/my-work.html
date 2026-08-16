@@ -385,7 +385,7 @@
         } @if (field.description) { <small>{{ field.description }}</small> }</label></div> }</div></details> }
       @if (h.subtaskError()) { <p class="form-message error">{{ h.subtaskError() }}</p> }
       <div class="subtask-batch-note"><span aria-hidden="true">＋</span><small>After saving, this dialog stays open so you can add another subtask.</small></div>
-      <div class="modal-actions"><button type="button" class="secondary" [disabled]="h.savingSubtask()" (click)="h.showSubtaskEditor.set(false)">Done</button><button type="button" class="primary" [disabled]="h.savingSubtask()" (click)="h.createSubtask()">{{ h.savingSubtask() ? 'Creating...' : 'Create subtask' }}</button></div>
+      <div class="modal-actions"><button type="button" class="secondary" [disabled]="h.savingSubtask()" (click)="h.showSubtaskEditor.set(false)">Cancel</button><button type="button" class="primary" [disabled]="h.savingSubtask()" (click)="h.createSubtask()">{{ h.savingSubtask() ? 'Creating...' : 'Create subtask' }}</button></div>
     </div>
   </div>
 }
