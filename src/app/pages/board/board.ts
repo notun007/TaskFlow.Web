@@ -15,6 +15,10 @@ import { ApiTask, BoardColumnItem, ReferenceItem, SprintItem, TaskApiService } f
 export class BoardPage implements OnInit {
   private readonly api = inject(TaskApiService);
   private loadRequestId = 0;
+  private readonly correctionTransitions = new Set([
+    'ReadyForTesting>Reopened', 'Uat>InProgress', 'Uat>Reopened',
+    'Resolved>Reopened', 'Closed>Reopened', 'Rejected>Reopened', 'Cancelled>Reopened',
+  ]);
 
   readonly fallbackStatuses = [
     'Submitted',
@@ -196,11 +200,23 @@ export class BoardPage implements OnInit {
   }
 
   move(task: ApiTask, status: string) {
+    let transitionComment = `Moved on board from ${task.status} to ${status}`;
+    const currentIndex = this.columns().findIndex(column => column.status === task.status);
+    const targetIndex = this.columns().findIndex(column => column.status === status);
+    const isBackward = currentIndex >= 0 && targetIndex >= 0 && targetIndex < currentIndex;
+    if (isBackward || this.correctionTransitions.has(`${task.status}>${status}`)) {
+      const reason = window.prompt(`Why is ${task.taskNumber} being returned to ${this.label(status)}?`);
+      if (!reason?.trim()) {
+        this.error.set('A reason is required to return or reopen a task.');
+        return;
+      }
+      transitionComment = `Returned on board from ${task.status} to ${status}. Reason: ${reason.trim()}`;
+    }
     this.moving.set(true);
     this.error.set('');
     this.message.set('');
     this.api
-      .changeTaskStatus(task.id, status, `Moved on board from ${task.status} to ${status}`, true)
+      .changeTaskStatus(task.id, status, transitionComment, true)
       .subscribe({
         next: (updated) => {
           this.tasks.update((tasks) =>

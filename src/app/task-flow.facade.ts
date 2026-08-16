@@ -505,7 +505,7 @@ export class TaskFlowFacade implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.savingTaskStatus.set(false);
-        this.taskDetailsError.set(error.status === 409 ? (error.error?.message || 'This workflow transition is not allowed.') : 'Task status could not be changed.');
+        this.taskDetailsError.set(error.error?.message || (error.status === 409 ? 'This workflow transition is not allowed.' : 'Task status could not be changed.'));
       }
     });
   }

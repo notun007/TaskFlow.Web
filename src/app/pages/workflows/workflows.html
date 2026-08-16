@@ -37,9 +37,9 @@
     <div class="workflow-card-head">
       <div>
         <h2>Transitions</h2>
-        <p>Each row defines one action available from the current status.</p>
+        <p>Each row defines a forward path. The same path can be used in reverse with a required reason.</p>
       </div>
-      <button type="button" class="secondary" (click)="addTransition()">+ Add transition</button>
+      <button type="button" class="secondary" [disabled]="loading()" (click)="addTransition()">+ Add transition</button>
     </div>
     <div class="transition-head">
       <span>From status</span><span></span><span>To status</span><span>Order</span><span></span>

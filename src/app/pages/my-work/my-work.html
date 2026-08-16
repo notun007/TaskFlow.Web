@@ -28,7 +28,7 @@
         ><input
           class="transition-note"
           aria-label="Transition note"
-          placeholder="Transition note (optional)"
+          placeholder="Transition note · required for return/reopen"
           maxlength="2000"
           [value]="h.transitionComment()"
           (input)="h.transitionComment.set($any($event.target).value)"
@@ -354,7 +354,6 @@
     </div>
   </section>
 }
-
 @if (h.showSubtaskEditor()) {
   <div class="modal-backdrop">
     <div class="modal create-task-modal subtask-create-modal" role="dialog" aria-modal="true" aria-labelledby="create-subtask-title" (click)="$event.stopPropagation()">
