@@ -25,6 +25,10 @@ export type ApiTask = {
   reporterUserId?: string | null;
   reporterDisplayName?: string | null;
   estimatedEffortMinutes?: number | null;
+  reportedByMe?: boolean;
+  ownedByMe?: boolean;
+  testingByMe?: boolean;
+  uatByMe?: boolean;
 };
 export type PagedTasks = { items: ApiTask[]; totalCount: number; page: number; pageSize: number };
 export type TaskListQuery = { search?: string; status?: string; priority?: string; projectId?: string; epicId?: string; epicAssignment?: 'assigned' | 'unassigned'; featureId?: string; featureAssignment?: 'assigned' | 'unassigned'; sortBy?: string; sortDirection?: string; page?: number; pageSize?: number };
@@ -47,11 +51,12 @@ export type UpdateCustomFieldRequest = { name: string; description: string | nul
 export type WorkflowTransitionItem = { id: string; fromStatus: string; toStatus: string; sortOrder: number };
 export type WorkflowDetails = { id: string; name: string; projectId?: string | null; project: string; isDefault: boolean; isInherited: boolean; statuses: string[]; transitions: WorkflowTransitionItem[] };
 export type SaveWorkflowRequest = { name: string; transitions: Array<{ fromStatus: string; toStatus: string; sortOrder: number }> };
-export type TransitionPermissionItem = { fromStatus: string; toStatus: string; roles: string[] };
+export type TransitionPermissionRule = { role: string; taskScope: string };
+export type TransitionPermissionItem = { fromStatus: string; toStatus: string; rules: TransitionPermissionRule[] };
 export type BoardColumnItem = { id: string; name: string; status: string; sortOrder: number; wipLimit?: number | null; isDefaultDestination: boolean };
 export type ProjectBoardDetails = { projectId: string; columns: BoardColumnItem[] };
 export type SaveProjectBoardRequest = { columns: Array<{ name: string; status: string; sortOrder: number; wipLimit: number | null; isDefaultDestination: boolean }> };
-export type SprintTaskItem = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; dueDate?: string | null; epicId?: string | null; epicName?: string | null; featureId?: string | null; featureName?: string | null };
+export type SprintTaskItem = { id: string; taskNumber: string; title: string; type: string; status: string; priority: string; dueDate?: string | null; epicId?: string | null; epicName?: string | null; featureId?: string | null; featureName?: string | null; ownerUserId?: string | null; reporterUserId?: string | null; reportedByMe?: boolean; ownedByMe?: boolean; testingByMe?: boolean; uatByMe?: boolean };
 export type SprintItem = { id: string; name: string; goal?: string | null; projectId: string; status: string; startDate?: string | null; endDate?: string | null; startedAt?: string | null; completedAt?: string | null; createdAt: string; tasks: SprintTaskItem[] };
 export type BacklogDetails = { projectId: string; projectName: string; sprints: SprintItem[]; backlog: SprintTaskItem[] };
 export type SaveSprintRequest = { name: string; goal: string | null; projectId: string; startDate: string | null; endDate: string | null };
@@ -76,7 +81,7 @@ export type SaveDepartmentRequest = { name: string; description: string | null }
 export type VendorListItem = { id: string; name: string; supportEmail?: string | null; supportPhone?: string | null; contractReference?: string | null; slaDetails?: string | null; applications: number };
 export type SaveVendorRequest = { name: string; supportEmail: string | null; supportPhone: string | null; contractReference: string | null; slaDetails: string | null };
 export type AuditListItem = { id: string; entityName: string; entityId: string; action: string; actorReference: string; createdAt: string };
-export type ApiTaskAssignment = { id: string; responsibility: string; partyReference: string; displayName?: string | null };
+export type ApiTaskAssignment = { id: string; responsibility: string; partyReference: string; displayName?: string | null; isPrimary: boolean };
 export type ApiTaskComment = { id: string; authorReference: string; body: string; createdAt: string };
 export type ApiTaskStatusHistory = { id: string; fromStatus: string; toStatus: string; actorReference: string; comment?: string | null; createdAt: string };
 export type ApiTaskLink = { id: string; type: string; isOutgoing: boolean; otherTaskId: string; otherTaskNumber: string; otherTaskTitle: string; otherTaskStatus: string };
@@ -330,11 +335,12 @@ export class TaskApiService {
     return this.http.post<ApiTaskComment>(`${this.baseUrl}/tasks/${id}/comments`, { body });
   }
 
-  addTaskAssignment(id: string, responsibility: string, partyReference: string, displayName: string): Observable<ApiTaskAssignment> {
+  addTaskAssignment(id: string, responsibility: string, partyReference: string, displayName: string, isPrimary: boolean): Observable<ApiTaskAssignment> {
     return this.http.post<ApiTaskAssignment>(`${this.baseUrl}/tasks/${id}/assignments`, {
       responsibility,
       partyReference,
-      displayName: displayName || null
+      displayName: displayName || null,
+      isPrimary
     });
   }
 

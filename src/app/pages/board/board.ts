@@ -36,7 +36,16 @@ export class BoardPage implements OnInit {
     'Cancelled',
     'Reopened',
   ];
-  readonly columns = signal<BoardColumnItem[]>(this.fallbackStatuses.map((status, index) => ({ id: '', name: this.label(status), status, sortOrder: (index + 1) * 10, wipLimit: null, isDefaultDestination: true })));
+
+  readonly columns = signal<BoardColumnItem[]>(this.fallbackStatuses.map((status, index) => ({ 
+    id: '', 
+    name: this.label(status), 
+    status, 
+    sortOrder: (index + 1) * 10, 
+    wipLimit: null, 
+    isDefaultDestination: true }
+  )));
+  
   readonly tasks = signal<ApiTask[]>([]);
   readonly projects = signal<ReferenceItem[]>([]);
   readonly search = signal('');
@@ -55,9 +64,11 @@ export class BoardPage implements OnInit {
   readonly visibleTasks = computed(() => this.typeFilter() ? this.tasks().filter(task => task.type === this.typeFilter()) : this.tasks());
   readonly taskTypes = computed(() => [...new Set(this.tasks().map(task => task.type))].sort());
   readonly visibleCount = computed(() => this.visibleTasks().length);
+  
   readonly allowedDropLabels = computed(() =>
     (this.allowedDropStatuses() ?? []).map((status) => this.label(status)).join(', '),
   );
+
   readonly selectedSprint = computed(() => this.sprints().find(sprint => sprint.id === this.sprintId()));
   readonly boardReadOnly = computed(() => this.selectedSprint()?.status !== 'Active');
 
@@ -65,45 +76,66 @@ export class BoardPage implements OnInit {
     this.api.getProjects().subscribe({
       next: (projects) => {
         this.projects.set(projects);
-        if (!this.projectId() && projects.length) this.projectId.set(projects[0].id);
-        this.load();
+
+        if (!this.projectId() && projects.length) 
+          this.projectId.set(projects[0].id);
+
+          this.load();
       },
       error: () => this.error.set('Projects could not be loaded.'),
     });
   }
 
   load() {
+
     const selectedProjectId = this.projectId();
     if (!selectedProjectId) {
-      this.tasks.set([]); this.columns.set([]); this.error.set('Select a project to load its board.'); return;
+      this.tasks.set([]); 
+      this.columns.set([]); 
+      this.error.set('Select a project to load its board.'); 
+      return;
     }
+
     const requestId = ++this.loadRequestId;
     this.loading.set(true);
     this.error.set('');
     this.message.set('');
+
     this.api.getProjectBoard(selectedProjectId).subscribe({
-      next: board => { if (requestId === this.loadRequestId && this.projectId() === selectedProjectId) this.columns.set(board.columns); },
-      error: () => { if (requestId === this.loadRequestId) this.error.set('This project\'s Board settings could not be loaded.'); },
+      next: board => { 
+        if (requestId === this.loadRequestId && this.projectId() === selectedProjectId) 
+          this.columns.set(board.columns); 
+        },
+        error: () => { 
+          if (requestId === this.loadRequestId) 
+            this.error.set('This project\'s Board settings could not be loaded.'); 
+          },
     });
+
     this.api.reconcileProjectWorkflowTasks(selectedProjectId).pipe(
       catchError(() => of(null)),
       switchMap(reconciliation => {
-        if (reconciliation && reconciliation.reconciledCount > 0) this.message.set(`${reconciliation.reconciledCount} task${reconciliation.reconciledCount === 1 ? '' : 's'} restored to ${this.label(reconciliation.entryStatus)}.`);
+        if (reconciliation && reconciliation.reconciledCount > 0) 
+          this.message.set(`${reconciliation.reconciledCount} task${reconciliation.reconciledCount === 1 ? '' : 's'} restored to ${this.label(reconciliation.entryStatus)}.`);
         return this.api.getBacklog(selectedProjectId);
       }),
     ).subscribe({
         next: (result) => {
-          if (requestId !== this.loadRequestId || this.projectId() !== selectedProjectId) return;
+          if (requestId !== this.loadRequestId || this.projectId() !== selectedProjectId) 
+            return;
+
           this.sprints.set([...result.sprints].sort((a, b) => {
             const rank = (status: string) => status === 'Active' ? 0 : status === 'Planned' ? 1 : 2;
             return rank(a.status) - rank(b.status) || Date.parse(b.createdAt) - Date.parse(a.createdAt);
           }));
+
           const selectedSprint = result.sprints.find(sprint => sprint.id === this.sprintId())
             ?? result.sprints.find(sprint => sprint.status === 'Active')
             ?? result.sprints.find(sprint => sprint.status === 'Planned');
           this.sprintId.set(selectedSprint?.id ?? '');
           this.setSprintTasks(selectedSprint, result.projectName);
           this.loading.set(false);
+
         },
         error: () => {
           if (requestId !== this.loadRequestId) return;
@@ -119,8 +151,21 @@ export class BoardPage implements OnInit {
     this.load();
   }
 
-  selectProject(projectId: string) { this.projectId.set(projectId); this.sprintId.set(''); this.typeFilter.set(''); this.tasks.set([]); this.load(); }
-  selectSprint(sprintId: string) { this.sprintId.set(sprintId); this.typeFilter.set(''); const sprint = this.sprints().find(x => x.id === sprintId); const projectName = this.projects().find(x => x.id === this.projectId())?.name ?? ''; this.setSprintTasks(sprint, projectName); }
+  selectProject(projectId: string) { 
+    this.projectId.set(projectId); 
+    this.sprintId.set(''); 
+    this.typeFilter.set(''); 
+    this.tasks.set([]); this.load(); 
+  }
+  
+  selectSprint(sprintId: string) { 
+    this.sprintId.set(sprintId); 
+    this.typeFilter.set(''); 
+    const sprint = this.sprints().find(x => x.id === sprintId); 
+    const projectName = this.projects().find(x => x.id === this.projectId())?.name ?? ''; 
+    this.setSprintTasks(sprint, projectName); 
+  }
+  
   private setSprintTasks(sprint: SprintItem | undefined, projectName: string) {
     const search = this.search().trim().toLowerCase();
     this.tasks.set((sprint?.tasks ?? []).filter(task => !search || task.title.toLowerCase().includes(search) || task.taskNumber.toLowerCase().includes(search)).map(task => ({ ...task, projectName })));
@@ -130,23 +175,46 @@ export class BoardPage implements OnInit {
     return this.visibleTasks().filter((task) => task.status === status);
   }
 
+  isRelatedToMe(task: ApiTask) {
+    return !!(task.reportedByMe || task.ownedByMe || task.testingByMe || task.uatByMe);
+  }
+
+  relationshipLabels(task: ApiTask) {
+    const labels: string[] = [];
+    if (task.reportedByMe) labels.push('Reported by me');
+    if (task.ownedByMe) labels.push('Assigned to me');
+    if (task.testingByMe) labels.push('Testing by me');
+    if (task.uatByMe) labels.push('UAT by me');
+    return labels;
+  }
+
   startDrag(task: ApiTask, event: DragEvent) {
-    if (this.moving() || this.boardReadOnly()) { event.preventDefault(); return; }
+
+    if (this.moving() || this.boardReadOnly()) { 
+      event.preventDefault(); return; 
+    }
+
     this.draggedTask.set(task);
     this.allowedDropStatuses.set(null);
     this.loadingTransitions.set(true);
     this.error.set('');
     event.dataTransfer?.setData('text/plain', task.id);
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    
+    if (event.dataTransfer) 
+      event.dataTransfer.effectAllowed = 'move';
 
     this.api.getTask(task.id).subscribe({
       next: (details) => {
-        if (this.draggedTask()?.id !== task.id) return;
+        if (this.draggedTask()?.id !== task.id) 
+          return;
+        
         this.allowedDropStatuses.set(details.allowedTransitions);
         this.loadingTransitions.set(false);
       },
       error: () => {
-        if (this.draggedTask()?.id !== task.id) return;
+        if (this.draggedTask()?.id !== task.id) 
+          return;
+        
         this.allowedDropStatuses.set([]);
         this.loadingTransitions.set(false);
         this.error.set(`Available transitions for ${task.taskNumber} could not be loaded.`);
@@ -168,28 +236,36 @@ export class BoardPage implements OnInit {
   }
 
   allowDrop(status: string, event: DragEvent) {
+
     if (!this.isAllowedDrop(status)) {
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
       return;
     }
+
     event.preventDefault();
     this.dragTarget.set(status);
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    if (event.dataTransfer) 
+      event.dataTransfer.dropEffect = 'move';
+
   }
 
   leaveDrop(status: string) {
-    if (this.dragTarget() === status) this.dragTarget.set('');
+    if (this.dragTarget() === status) 
+      this.dragTarget.set('');
   }
 
   drop(status: string, event: DragEvent) {
     event.preventDefault();
     const task = this.draggedTask();
-    if (!task || !this.isAllowedDrop(status)) return;
+    if (!task || !this.isAllowedDrop(status)) 
+      return;
+    
     this.dragTarget.set('');
     this.draggedTask.set(null);
     this.allowedDropStatuses.set(null);
     this.loadingTransitions.set(false);
     this.move(task, status);
+
   }
 
   endDrag() {
@@ -204,6 +280,7 @@ export class BoardPage implements OnInit {
     const currentIndex = this.columns().findIndex(column => column.status === task.status);
     const targetIndex = this.columns().findIndex(column => column.status === status);
     const isBackward = currentIndex >= 0 && targetIndex >= 0 && targetIndex < currentIndex;
+    
     if (isBackward || this.correctionTransitions.has(`${task.status}>${status}`)) {
       const reason = window.prompt(`Why is ${task.taskNumber} being returned to ${this.label(status)}?`);
       if (!reason?.trim()) {
@@ -212,6 +289,7 @@ export class BoardPage implements OnInit {
       }
       transitionComment = `Returned on board from ${task.status} to ${status}. Reason: ${reason.trim()}`;
     }
+    
     this.moving.set(true);
     this.error.set('');
     this.message.set('');

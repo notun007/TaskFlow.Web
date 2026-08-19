@@ -49,6 +49,11 @@
     <span class="board-total">{{ visibleCount() }} tasks</span>
   </div>
 
+  <aside class="board-access-guide" aria-label="Board access rule">
+    <div><strong>Movement access</strong><span>Project role</span><i>+</i><span>Transition permission</span><i>+</i><span>Task scope</span></div>
+    <p><b class="related-swatch"></b>Blue cards show a known relationship to you. <b class="visible-swatch"></b>All movement is still decided by the configured role, transition, and task scope.</p>
+  </aside>
+
   @if (draggedTask()) {
     <div class="board-drag-help" [class.loading]="loadingTransitions()">
       <strong>{{ draggedTask()?.taskNumber }}</strong>
@@ -102,8 +107,10 @@
             @for (task of tasksFor(status); track task.id) {
               <article
                 class="kanban-card"
+                [attr.title]="isRelatedToMe(task) ? 'Related to you: ' + relationshipLabels(task).join(', ') + '. Movement still requires a permitted transition and matching task scope.' : 'Project-visible task. Movement depends on your configured role, transition permission, and task scope.'"
                 [draggable]="!boardReadOnly()"
                 [class.read-only]="boardReadOnly()"
+                [class.related-to-me]="isRelatedToMe(task)"
                 [class.dragging]="draggedTask()?.id === task.id"
                 (dragstart)="startDrag(task, $event)"
                 (dragend)="endDrag()"
@@ -113,6 +120,13 @@
                   <span class="card-type">{{ label(task.type) }}</span>
                 </div>
                 <h3>{{ task.title }}</h3>
+                @if (relationshipLabels(task).length) {
+                  <div class="card-relationships" aria-label="Your relationship to this task">
+                    @for (relationship of relationshipLabels(task); track relationship) {
+                      <span>{{ relationship }}</span>
+                    }
+                  </div>
+                }
                 <p>{{ task.projectName || 'Unassigned project' }}</p>
                 @if (task.epicName) { <p class="card-epic">Epic: {{ task.epicName }}</p> }
                 @if (task.featureName) { <p class="card-feature">Feature: {{ task.featureName }}</p> }

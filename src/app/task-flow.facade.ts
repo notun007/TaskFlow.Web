@@ -135,6 +135,7 @@ export class TaskFlowFacade implements OnInit {
   readonly assignmentResponsibility = signal('Assignee');
   readonly assignmentPartyReference = signal('');
   readonly assignmentDisplayName = signal('');
+  readonly assignmentIsPrimary = signal(false);
   readonly showAssignmentModal = signal(false);
   readonly savingAssignment = signal(false);
   readonly assignmentError = signal('');
@@ -481,12 +482,14 @@ export class TaskFlowFacade implements OnInit {
 
   openAssignmentModal() {
     this.assignmentError.set('');
+    this.assignmentIsPrimary.set(false);
     this.showAssignmentModal.set(true);
   }
 
   closeAssignmentModal() {
     if (this.savingAssignment()) return;
     this.assignmentError.set('');
+    this.assignmentIsPrimary.set(false);
     this.showAssignmentModal.set(false);
   }
 
@@ -616,21 +619,30 @@ export class TaskFlowFacade implements OnInit {
     }
     this.savingAssignment.set(true);
     this.assignmentError.set('');
-    this.taskApi.addTaskAssignment(task.id, this.assignmentResponsibility(), partyReference, this.assignmentDisplayName().trim()).subscribe({
+    this.taskApi.addTaskAssignment(task.id, this.assignmentResponsibility(), partyReference, this.assignmentDisplayName().trim(), this.assignmentIsPrimary()).subscribe({
       next: assignment => {
         this.savingAssignment.set(false);
         this.assignmentPartyReference.set('');
         this.assignmentDisplayName.set('');
+        this.assignmentIsPrimary.set(false);
         this.showAssignmentModal.set(false);
-        this.selectedTask.update(current => current && !current.assignments.some(item => item.id === assignment.id)
-          ? { ...current, assignments: [...current.assignments, assignment] }
-          : current);
+        this.selectedTask.update(current => {
+          if (!current) return current;
+          const assignments = current.assignments
+            .filter(item => item.id !== assignment.id)
+            .map(item => assignment.isPrimary && item.responsibility === assignment.responsibility ? { ...item, isPrimary: false } : item);
+          return { ...current, assignments: [...assignments, assignment] };
+        });
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
         this.savingAssignment.set(false);
-        this.assignmentError.set('The assignment could not be added.');
+        this.assignmentError.set(error.error?.message || 'The assignment could not be added.');
       }
     });
+  }
+
+  assignmentSupportsPrimary() {
+    return ['Tester', 'UatOwner'].includes(this.assignmentResponsibility());
   }
 
   removeAssignment(assignmentId: string) {
